@@ -1,0 +1,2 @@
+#!/bin/bash
+wget -c https://raw.githubusercontent.com/Marsan-Ma/chat_corpus/master/twitter_en.txt.gz

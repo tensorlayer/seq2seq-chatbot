@@ -1,0 +1,3 @@
+#!/bin/bash
+
+wget -c 'https://www.dropbox.com/s/tmfwptbs3q180p0/seq2seq.twitter.tar.gz?dl=0' -O seq2seq.twitter.tar.gz
