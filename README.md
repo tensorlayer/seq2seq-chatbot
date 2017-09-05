@@ -6,6 +6,17 @@ This is a 200 lines implementation of Twitter/Cornell-Movie Chatbot, please read
 - [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/)
 - [Understanding LSTM Networks](http://colah.github.io/posts/2015-08-Understanding-LSTMs/) (option)
 
+### Model
+
+
+
+<table class="image">
+<div align="center">
+    <img src="http://suriyadeepan.github.io/img/seq2seq/seq2seq2.png"/>  
+    <br>  
+    <em align="center"></em>  
+</div>
+</table>
 
 ### Results
 
