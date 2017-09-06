@@ -1,13 +1,11 @@
 #! /usr/bin/python
 # -*- coding: utf8 -*-
-
 """Sequence to Sequence Learning for Twitter/Cornell Chatbot.
 
 References
 ----------
 http://suriyadeepan.github.io/2016-12-31-practical-seq2seq/
 """
-
 import tensorflow as tf
 import tensorlayer as tl
 from tensorlayer.layers import *
@@ -16,7 +14,7 @@ import tensorflow as tf
 import numpy as np
 import time
 
-## select dataset
+###============= prepare data
 from data.twitter import data
 metadata, idx_q, idx_a = data.load_data(PATH='data/twitter/')                   # Twitter
 # from data.cornell_corpus import data
@@ -37,7 +35,7 @@ testY = tl.prepro.remove_pad_sequences(testY)
 validX = tl.prepro.remove_pad_sequences(validX)
 validY = tl.prepro.remove_pad_sequences(validY)
 
-## parameters
+###============= parameters
 xseq_len = len(trainX)#.shape[-1]
 yseq_len = len(trainY)#.shape[-1]
 assert xseq_len == yseq_len
@@ -83,7 +81,7 @@ print("target_mask", target_mask)
 print(len(target_seqs), len(decode_seqs), len(target_mask))
 # exit()
 
-## model
+###============= model
 def model(encode_seqs, decode_seqs, is_train=True, reuse=False):
     with tf.variable_scope("model", reuse=reuse):
         # for chatbot, you can use the same embedding layer,
@@ -115,18 +113,20 @@ def model(encode_seqs, decode_seqs, is_train=True, reuse=False):
         net_out = DenseLayer(net_rnn, n_units=xvocab_size, act=tf.identity, name='output')
     return net_out, net_rnn
 
+# model for training
 encode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="encode_seqs")
 decode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="decode_seqs")
 target_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_seqs")
 target_mask = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_mask") # tl.prepro.sequences_get_mask()
-
 net_out, _ = model(encode_seqs, decode_seqs, is_train=True, reuse=False)
 
+# model for inferencing
 encode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="encode_seqs")
 decode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="decode_seqs")
 net, net_rnn = model(encode_seqs2, decode_seqs2, is_train=False, reuse=True)
 y = tf.nn.softmax(net.outputs)
 
+# loss for training
 # print(net_out.outputs)    # (?, 8004)
 # print(target_seqs)    # (32, ?)
     # loss_weights = tf.ones_like(target_seqs, dtype=tf.float32)
@@ -148,7 +148,7 @@ sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_pl
 tl.layers.initialize_global_variables(sess)
 tl.files.load_and_assign_npz(sess=sess, name='n.npz', network=net)
 
-## train
+###============= train
 n_epoch = 50
 for epoch in range(n_epoch):
     epoch_time = time.time()
@@ -189,7 +189,7 @@ for epoch in range(n_epoch):
 
         total_err += err; n_iter += 1
 
-        ## inference
+        ###============= inference
         if n_iter % 1000 == 0:
             seeds = ["happy birthday have a nice day",
                     "donald trump won last nights presidential debate according to snap online polls"]
