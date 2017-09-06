@@ -213,7 +213,7 @@ for epoch in range(n_epoch):
                         o, state = sess.run([y, net_rnn.final_state_decode],
                                         {net_rnn.initial_state_decode: state,
                                         decode_seqs2: [[w_id]]})
-                        w_id = tl.nlp.sample_top(o[0], top_k=3)
+                        w_id = tl.nlp.sample_top(o[0], top_k=2)
                         w = idx2w[w_id]
                         if w_id == end_id:
                             break

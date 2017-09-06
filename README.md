@@ -34,7 +34,7 @@ Query > donald trump won last nights presidential debate according to snap onlin
  > i think he was a racist
  > he is not a racist
  > he is a liar
- > i dont think he is a disgrace
+ > trump needs to be president
 
 ```
 <!---
