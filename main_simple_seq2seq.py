@@ -49,16 +49,14 @@ idx2w = metadata['idx2w']   # list index 2 word
 
 unk_id = w2idx['unk']   # 1
 pad_id = w2idx['_']     # 0
-# print(idx2w[8001])
-# exit()
+
 start_id = xvocab_size  # 8002
 end_id = xvocab_size+1  # 8003
-# print(start_id, end_id)
-# exit()
+
 w2idx.update({'start_id': start_id})
 w2idx.update({'end_id': end_id})
 idx2w = idx2w + ['start_id', 'end_id']
-# print(idx2w)
+
 xvocab_size = yvocab_size = xvocab_size + 2
 
 """ A data for Seq2Seq should look like this:
@@ -70,16 +68,14 @@ target_mask : [1, 1, 1, 1, 0]
 
 print("encode_seqs", [idx2w[id] for id in trainX[10]])
 target_seqs = tl.prepro.sequences_add_end_id([trainY[10]], end_id=end_id)[0]
-# target_seqs = tl.prepro.remove_pad_sequences([target_seqs], pad_id=pad_id)[0]
+    # target_seqs = tl.prepro.remove_pad_sequences([target_seqs], pad_id=pad_id)[0]
 print("target_seqs", [idx2w[id] for id in target_seqs])
-# exit()
 decode_seqs = tl.prepro.sequences_add_start_id([trainY[10]], start_id=start_id, remove_last=False)[0]
-# decode_seqs = tl.prepro.remove_pad_sequences([decode_seqs], pad_id=pad_id)[0]
+    # decode_seqs = tl.prepro.remove_pad_sequences([decode_seqs], pad_id=pad_id)[0]
 print("decode_seqs", [idx2w[id] for id in decode_seqs])
 target_mask = tl.prepro.sequences_get_mask([target_seqs])[0]
 print("target_mask", target_mask)
 print(len(target_seqs), len(decode_seqs), len(target_mask))
-# exit()
 
 ###============= model
 def model(encode_seqs, decode_seqs, is_train=True, reuse=False):
@@ -127,8 +123,8 @@ net, net_rnn = model(encode_seqs2, decode_seqs2, is_train=False, reuse=True)
 y = tf.nn.softmax(net.outputs)
 
 # loss for training
-# print(net_out.outputs)    # (?, 8004)
-# print(target_seqs)    # (32, ?)
+    # print(net_out.outputs)    # (?, 8004)
+    # print(target_seqs)    # (32, ?)
     # loss_weights = tf.ones_like(target_seqs, dtype=tf.float32)
     # loss = tf.contrib.legacy_seq2seq.sequence_loss(net_out.outputs, target_seqs, loss_weights, yvocab_size)
 loss = tl.cost.cross_entropy_seq_with_mask(logits=net_out.outputs, target_seqs=target_seqs, input_mask=target_mask, return_details=False, name='cost')
@@ -137,7 +133,7 @@ net_out.print_params(False)
 
 lr = 0.0001
 train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss)
-# Truncated Backpropagation for training
+# Truncated Backpropagation for training (option)
 # max_grad_norm = 30
 # grads, _ = tf.clip_by_global_norm(tf.gradients(loss, net_out.all_params),max_grad_norm)
 # optimizer = tf.train.GradientDescentOptimizer(lr)
@@ -219,7 +215,6 @@ for epoch in range(n_epoch):
                             break
                         sentence = sentence + [w]
                     print(" >", ' '.join(sentence))
-                    # exit()
 
     print("Epoch[%d/%d] averaged loss:%f took:%.5fs" % (epoch, n_epoch, total_err/n_iter, time.time()-epoch_time))
 
