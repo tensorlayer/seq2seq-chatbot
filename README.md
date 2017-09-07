@@ -6,6 +6,12 @@ This is a 200 lines implementation of Twitter/Cornell-Movie Chatbot, please read
 - [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/)
 - [Understanding LSTM Networks](http://colah.github.io/posts/2015-08-Understanding-LSTMs/) (optional)
 
+### Prerequisites
+
+- Python 
+- [TensorFlow](https://github.com/tensorflow/tensorflow)
+- [TensorLayer](https://github.com/zsdonghao/tensorlayer) (self-contained)
+
 ### Model
 
 
