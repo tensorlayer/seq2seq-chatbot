@@ -9,8 +9,8 @@ This is a 200 lines implementation of Twitter/Cornell-Movie Chatbot, please read
 ### Prerequisites
 
 - Python 
-- [TensorFlow](https://github.com/tensorflow/tensorflow)
-- [TensorLayer](https://github.com/zsdonghao/tensorlayer) (self-contained)
+- [TensorFlow](https://github.com/tensorflow/tensorflow) >= 1.2
+- [TensorLayer](https://github.com/zsdonghao/tensorlayer) >= 1.6.3
 
 ### Model
 

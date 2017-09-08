@@ -1,7 +1,8 @@
 dea
 docs/_build
-tensorlaye/__pacache__
-tensorlaye/.DS_Store
+tensorlayer
+tensorlayer/__pacache__
+tensorlayer/.DS_Store
 .DS_Store
 dist
 build/
