@@ -14,8 +14,6 @@ This is a 200 lines implementation of Twitter/Cornell-Movie Chatbot, please read
 
 ### Model
 
-
-
 <table class="image">
 <div align="center">
     <img src="http://suriyadeepan.github.io/img/seq2seq/seq2seq2.png"/>  
