@@ -89,7 +89,7 @@ def model(encode_seqs, decode_seqs, is_train=True, reuse=False):
                 embedding_size = emb_dim,
                 name = 'seq_embedding')
             vs.reuse_variables()
-            tl.layers.set_name_reuse(True)
+            tl.layers.set_name_reuse(True) # remove if TL version == 1.8.0+
             net_decode = EmbeddingInputlayer(
                 inputs = decode_seqs,
                 vocabulary_size = xvocab_size,
