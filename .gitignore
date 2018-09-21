@@ -11,3 +11,4 @@ data/.DS_Store
 *.pyc
 *.gz
 .spyproject/
+.vscode/*
