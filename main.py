@@ -26,16 +26,11 @@ sess_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=Fal
 Training model [optional args]
 """
 @click.command()
-@click.option('-dc', '--data-corpus', default='twitter', 
-                help='Data corpus to use for training and inference',)
-@click.option('-bs', '--batch-size', default=32, 
-                help='Batch size for training on minibatches',)
-@click.option('-n', '--num-epochs', default=50, 
-                help='Number of epochs for training',)
-@click.option('-lr', '--learning-rate', default=0.001, 
-                help='Learning rate to use when training model',)
-@click.option('-inf', '--inference-mode', is_flag=True, 
-                help='Flag for INFERENCE mode',)
+@click.option('-dc', '--data-corpus', default='twitter', help='Data corpus to use for training and inference',)
+@click.option('-bs', '--batch-size', default=32, help='Batch size for training on minibatches',)
+@click.option('-n', '--num-epochs', default=50, help='Number of epochs for training',)
+@click.option('-lr', '--learning-rate', default=0.001, help='Learning rate to use when training model',)
+@click.option('-inf', '--inference-mode', is_flag=True, help='Flag for INFERENCE mode',)
 def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
 
     metadata, trainX, trainY, testX, testY, validX, validY = initial_setup(data_corpus)
@@ -98,7 +93,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
 
     # Loss Function
     loss = tl.cost.cross_entropy_seq_with_mask(logits=net_out.outputs, target_seqs=target_seqs, 
-        input_mask=target_mask, return_details=False, name='cost')
+                                                input_mask=target_mask, return_details=False, name='cost')
 
     net_out.print_params(False)
 
@@ -111,18 +106,23 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     tl.files.load_and_assign_npz(sess=sess, name='model.npz', network=net)
 
     if inference_mode:
+        print('Inference Mode')
+        print('--------------')
         while True:
             input_seq = input('Enter Query: ')
-            sentence = inference(sess, input_seq, net_rnn, encode_seqs2, decode_seqs2, y, word2idx, idx2word, start_id, end_id)
-            print(" >", ' '.join(sentence))
+            try:
+                sentence = inference(sess, input_seq, net_rnn, encode_seqs2, decode_seqs2, y, word2idx, idx2word, start_id, end_id)
+                print(" >", ' '.join(sentence))
+            except KeyError:
+                print('Unknown token. Please try again!')
     else:
         seeds = ["happy birthday have a nice day",
                  "donald trump won last nights presidential debate according to snap online polls"]
         for epoch in range(num_epochs):
             trainX, trainY = shuffle(trainX, trainY, random_state=0)
-            total_err, n_iter = 0, 0
+            total_loss, n_iter = 0, 0
             for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False), 
-                            total=n_step, desc='Epoch[{}/{}]'.format(epoch, num_epochs), leave=False):
+                            total=n_step, desc='Epoch[{}/{}]'.format(epoch + 1, num_epochs), leave=False):
 
                 X = tl.prepro.pad_sequences(X)
                 _target_seqs = tl.prepro.sequences_add_end_id(Y, end_id=end_id)
@@ -133,23 +133,26 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
                 ## Uncomment to view the data here
                 # for i in range(len(X)):
                 #     print(i, [idx2word[id] for id in X[i]])
-                #     # print(i, [idx2word[id] for id in Y[i]])
+                #     print(i, [idx2word[id] for id in Y[i]])
                 #     print(i, [idx2word[id] for id in _target_seqs[i]])
                 #     print(i, [idx2word[id] for id in _decode_seqs[i]])
                 #     print(i, _target_mask[i])
                 #     print(len(_target_seqs[i]), len(_decode_seqs[i]), len(_target_mask[i]))
-                _, err = sess.run([train_op, loss], {encode_seqs: X, decode_seqs: _decode_seqs,
+                _, loss_iter = sess.run([train_op, loss], {encode_seqs: X, decode_seqs: _decode_seqs,
                                 target_seqs: _target_seqs, target_mask: _target_mask})
-                total_err += err
+                total_loss += loss_iter
                 n_iter += 1
-            # printing loss after every epoch
-            print('Epoch [{}/{}]: loss {:.4f}'.format(epoch, num_epochs, total_err))
-            # inference
+
+            # printing average loss after every epoch
+            print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
+            
+            # inference after every epoch
             for seed in seeds:
                 print("Query >", seed)
                 for _ in range(5):
                     sentence = inference(sess, seed, net_rnn, encode_seqs2, decode_seqs2, y, word2idx, idx2word, start_id, end_id)
                     print(" >", ' '.join(sentence))
+            
             # saving the model
             tl.files.save_npz(net.all_params, name='model.npz', sess=sess)
 
