@@ -105,13 +105,40 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     sess.run(tf.global_variables_initializer())
     tl.files.load_and_assign_npz(sess=sess, name='model.npz', network=net)
 
+    """
+    Inference using pre-trained model
+    """
+    def inference(seed):
+        seed_id = [word2idx[w] for w in seed.split(" ")]
+        # Encode and get state
+        state = sess.run(net_rnn.final_state_encode,
+                        {encode_seqs2: [seed_id]})
+        # Decode, feed start_id and get first word [https://github.com/zsdonghao/tensorlayer/blob/master/example/tutorial_ptb_lstm_state_is_tuple.py]
+        o, state = sess.run([y, net_rnn.final_state_decode],
+                        {net_rnn.initial_state_decode: state,
+                        decode_seqs2: [[start_id]]})
+        w_id = tl.nlp.sample_top(o[0], top_k=3)
+        w = idx2word[w_id]
+        # Decode and feed state iteratively
+        sentence = [w]
+        for _ in range(30): # max sentence length
+            o, state = sess.run([y, net_rnn.final_state_decode],
+                            {net_rnn.initial_state_decode: state,
+                            decode_seqs2: [[w_id]]})
+            w_id = tl.nlp.sample_top(o[0], top_k=2)
+            w = idx2word[w_id]
+            if w_id == end_id:
+                break
+            sentence = sentence + [w]
+        return sentence
+
     if inference_mode:
         print('Inference Mode')
         print('--------------')
         while True:
             input_seq = input('Enter Query: ')
             try:
-                sentence = inference(sess, input_seq, net_rnn, encode_seqs2, decode_seqs2, y, word2idx, idx2word, start_id, end_id)
+                sentence = inference(input_seq)
                 print(" >", ' '.join(sentence))
             except KeyError:
                 print('Unknown token. Please try again!')
@@ -150,52 +177,11 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
             for seed in seeds:
                 print("Query >", seed)
                 for _ in range(5):
-                    sentence = inference(sess, seed, net_rnn, encode_seqs2, decode_seqs2, y, word2idx, idx2word, start_id, end_id)
+                    sentence = inference(seed)
                     print(" >", ' '.join(sentence))
             
             # saving the model
             tl.files.save_npz(net.all_params, name='model.npz', sess=sess)
-
-"""
-Inference using pre-trained model
-"""
-def inference(sess, seed, net_rnn, encode_seqs2, decode_seqs2, y, word2idx, idx2word, start_id, end_id):
-    seed_id = [word2idx[w] for w in seed.split(" ")]
-    # Encode and get state
-    state = sess.run(net_rnn.final_state_encode,
-                    {encode_seqs2: [seed_id]})
-    # Decode, feed start_id and get first word [https://github.com/zsdonghao/tensorlayer/blob/master/example/tutorial_ptb_lstm_state_is_tuple.py]
-    o, state = sess.run([y, net_rnn.final_state_decode],
-                    {net_rnn.initial_state_decode: state,
-                    decode_seqs2: [[start_id]]})
-    w_id = tl.nlp.sample_top(o[0], top_k=3)
-    w = idx2word[w_id]
-    # Decode and feed state iteratively
-    sentence = [w]
-    for _ in range(30): # max sentence length
-        o, state = sess.run([y, net_rnn.final_state_decode],
-                        {net_rnn.initial_state_decode: state,
-                        decode_seqs2: [[w_id]]})
-        w_id = tl.nlp.sample_top(o[0], top_k=2)
-        w = idx2word[w_id]
-        if w_id == end_id:
-            break
-        sentence = sentence + [w]
-    return sentence
-
-"""
-Initial Setup
-"""
-def initial_setup(data_corpus):
-    metadata, idx_q, idx_a = data.load_data(PATH='data/{}/'.format(data_corpus))
-    (trainX, trainY), (testX, testY), (validX, validY) = data.split_dataset(idx_q, idx_a)
-    trainX = tl.prepro.remove_pad_sequences(trainX.tolist())
-    trainY = tl.prepro.remove_pad_sequences(trainY.tolist())
-    testX = tl.prepro.remove_pad_sequences(testX.tolist())
-    testY = tl.prepro.remove_pad_sequences(testY.tolist())
-    validX = tl.prepro.remove_pad_sequences(validX.tolist())
-    validY = tl.prepro.remove_pad_sequences(validY.tolist())
-    return metadata, trainX, trainY, testX, testY, validX, validY
 
 """
 Creates the LSTM Model
@@ -229,6 +215,20 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
                 name = 'seq2seq')
         net_out = DenseLayer(net_rnn, n_units=src_vocab_size, act=tf.identity, name='output')
     return net_out, net_rnn
+
+"""
+Initial Setup
+"""
+def initial_setup(data_corpus):
+    metadata, idx_q, idx_a = data.load_data(PATH='data/{}/'.format(data_corpus))
+    (trainX, trainY), (testX, testY), (validX, validY) = data.split_dataset(idx_q, idx_a)
+    trainX = tl.prepro.remove_pad_sequences(trainX.tolist())
+    trainY = tl.prepro.remove_pad_sequences(trainY.tolist())
+    testX = tl.prepro.remove_pad_sequences(testX.tolist())
+    testY = tl.prepro.remove_pad_sequences(testY.tolist())
+    validX = tl.prepro.remove_pad_sequences(validX.tolist())
+    validY = tl.prepro.remove_pad_sequences(validY.tolist())
+    return metadata, trainX, trainY, testX, testY, validX, validY
 
 def main():
     try:
