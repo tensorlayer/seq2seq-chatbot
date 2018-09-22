@@ -18,7 +18,6 @@ from sklearn.utils import shuffle
 from tensorlayer.layers import DenseLayer, EmbeddingInputlayer, Seq2Seq, retrieve_seq_length_op2
 
 from data.twitter import data
-from data.cornell_corpus import data
 
 sess_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 
@@ -202,6 +201,7 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
                 vocabulary_size = src_vocab_size,
                 embedding_size = emb_dim,
                 name = 'seq_embedding')
+            
         net_rnn = Seq2Seq(net_encode, net_decode,
                 cell_fn = tf.nn.rnn_cell.LSTMCell,
                 n_hidden = emb_dim,
@@ -213,6 +213,7 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
                 n_layer = 3,
                 return_seq_2d = True,
                 name = 'seq2seq')
+
         net_out = DenseLayer(net_rnn, n_units=src_vocab_size, act=tf.identity, name='output')
     return net_out, net_rnn
 
