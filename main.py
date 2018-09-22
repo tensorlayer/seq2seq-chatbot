@@ -201,6 +201,7 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
                 vocabulary_size = src_vocab_size,
                 embedding_size = emb_dim,
                 name = 'seq_embedding')
+            
         net_rnn = Seq2Seq(net_encode, net_decode,
                 cell_fn = tf.nn.rnn_cell.LSTMCell,
                 n_hidden = emb_dim,
@@ -212,6 +213,7 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
                 n_layer = 3,
                 return_seq_2d = True,
                 name = 'seq2seq')
+
         net_out = DenseLayer(net_rnn, n_units=src_vocab_size, act=tf.identity, name='output')
     return net_out, net_rnn
 
