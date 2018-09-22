@@ -18,7 +18,6 @@ from sklearn.utils import shuffle
 from tensorlayer.layers import DenseLayer, EmbeddingInputlayer, Seq2Seq, retrieve_seq_length_op2
 
 from data.twitter import data
-from data.cornell_corpus import data
 
 sess_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 
