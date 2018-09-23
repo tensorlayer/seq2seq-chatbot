@@ -76,6 +76,10 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
         print("target_mask", target_mask)
         print(len(target_seqs), len(decode_seqs), len(target_mask))
 
+    # Init Session
+    tf.reset_default_graph()
+    sess = tf.Session(config=sess_config)
+
     # Training Data Placeholders
     encode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="encode_seqs")
     decode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="decode_seqs")
@@ -99,9 +103,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     # Optimizer
     train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
-    # Init Session
-    tf.reset_default_graph()
-    sess = tf.Session(config=sess_config)
+    # Init Vars
     sess.run(tf.global_variables_initializer())
 
     # Load Model
