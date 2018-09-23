@@ -51,7 +51,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     pad_id = word2idx['_']     # 0
 
     start_id = src_vocab_size  # 8002
-    end_id = src_vocab_size+1  # 8003
+    end_id = src_vocab_size + 1  # 8003
 
     word2idx.update({'start_id': start_id})
     word2idx.update({'end_id': end_id})
@@ -65,6 +65,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     target_seqs : ['I', 'am', 'fine', '<END_ID>', '<PAD_ID'>]
     target_mask : [1, 1, 1, 1, 0]
     """
+    # Preprocessing
     target_seqs = tl.prepro.sequences_add_end_id([trainY[10]], end_id=end_id)[0]
     decode_seqs = tl.prepro.sequences_add_start_id([trainY[10]], start_id=start_id, remove_last=False)[0]
     target_mask = tl.prepro.sequences_get_mask([target_seqs])[0]
@@ -75,15 +76,16 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
         print("target_mask", target_mask)
         print(len(target_seqs), len(decode_seqs), len(target_mask))
 
-    # Training Model
+    # Training Data Placeholders
     encode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="encode_seqs")
     decode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="decode_seqs")
     target_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_seqs")
     target_mask = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_mask") 
 
     net_out, _ = create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=(not inference_mode), reuse=False)
+    net_out.print_params(False)
 
-    # Inference Model
+    # Inference Data Placeholders
     encode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="encode_seqs")
     decode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="decode_seqs")
 
@@ -94,14 +96,15 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     loss = tl.cost.cross_entropy_seq_with_mask(logits=net_out.outputs, target_seqs=target_seqs, 
                                                 input_mask=target_mask, return_details=False, name='cost')
 
-    net_out.print_params(False)
-
     # Optimizer
     train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
     # Init Session
+    tf.reset_default_graph()
     sess = tf.Session(config=sess_config)
     sess.run(tf.global_variables_initializer())
+
+    # Load Model
     tl.files.load_and_assign_npz(sess=sess, name='model.npz', network=net)
 
     """
@@ -181,6 +184,9 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
             
             # saving the model
             tl.files.save_npz(net.all_params, name='model.npz', sess=sess)
+    
+    # session cleanup
+    sess.close()
 
 """
 Creates the LSTM Model
