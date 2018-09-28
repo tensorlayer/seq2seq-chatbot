@@ -84,10 +84,10 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     encode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="encode_seqs")
     decode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="decode_seqs")
     target_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_seqs")
-    target_mask = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_mask") 
+    target_mask = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_mask")
 
     net_out, _ = create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=(not inference_mode), reuse=False)
-    net_out.print_params(False)
+    net_out.print_weights(False)
 
     # Inference Data Placeholders
     encode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="encode_seqs")
@@ -97,7 +97,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     y = tf.nn.softmax(net.outputs)
 
     # Loss Function
-    loss = tl.cost.cross_entropy_seq_with_mask(logits=net_out.outputs, target_seqs=target_seqs, 
+    loss = tl.cost.cross_entropy_seq_with_mask(logits=net_out.outputs, target_seqs=target_seqs,
                                                 input_mask=target_mask, return_details=False, name='cost')
 
     # Optimizer
@@ -152,7 +152,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
         for epoch in range(num_epochs):
             trainX, trainY = shuffle(trainX, trainY, random_state=0)
             total_loss, n_iter = 0, 0
-            for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False), 
+            for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False),
                             total=n_step, desc='Epoch[{}/{}]'.format(epoch + 1, num_epochs), leave=False):
 
                 X = tl.prepro.pad_sequences(X)
@@ -176,17 +176,17 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
 
             # printing average loss after every epoch
             print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
-            
+
             # inference after every epoch
             for seed in seeds:
                 print("Query >", seed)
                 for _ in range(5):
                     sentence = inference(seed)
                     print(" >", ' '.join(sentence))
-            
+
             # saving the model
             tl.files.save_npz(net.all_params, name='model.npz', sess=sess)
-    
+
     # session cleanup
     sess.close()
 
@@ -199,18 +199,16 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
         # for translation, you may want to use 2 seperated embedding layers
         with tf.variable_scope("embedding") as vs:
             net_encode = EmbeddingInputlayer(
-                inputs = encode_seqs,
                 vocabulary_size = src_vocab_size,
                 embedding_size = emb_dim,
-                name = 'seq_embedding')
+                name = 'seq_embedding')(encode_seqs)
             vs.reuse_variables()
             net_decode = EmbeddingInputlayer(
-                inputs = decode_seqs,
                 vocabulary_size = src_vocab_size,
                 embedding_size = emb_dim,
-                name = 'seq_embedding')
-            
-        net_rnn = Seq2Seq(net_encode, net_decode,
+                name = 'seq_embedding')(decode_seqs)
+
+        net_rnn = Seq2Seq(
                 cell_fn = tf.nn.rnn_cell.LSTMCell,
                 n_hidden = emb_dim,
                 initializer = tf.random_uniform_initializer(-0.1, 0.1),
@@ -220,9 +218,9 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
                 dropout = (0.5 if is_train else None),
                 n_layer = 3,
                 return_seq_2d = True,
-                name = 'seq2seq')
+                name = 'seq2seq')(net_encode, net_decode, is_train=is_train)
 
-        net_out = DenseLayer(net_rnn, n_units=src_vocab_size, act=tf.identity, name='output')
+        net_out = DenseLayer(n_units=src_vocab_size, act=tf.identity, name='output')(net_rnn)
     return net_out, net_rnn
 
 """
