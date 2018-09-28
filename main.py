@@ -19,6 +19,9 @@ from tensorlayer.layers import DenseLayer, EmbeddingInputlayer, Seq2Seq, retriev
 
 from data.twitter import data
 
+tf.logging.set_verbosity(tf.logging.DEBUG) # display loggings
+tl.logging.set_verbosity(tl.logging.DEBUG)
+
 sess_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 
 """
@@ -87,13 +90,13 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     target_mask = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_mask")
 
     net_out, _ = create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=(not inference_mode), reuse=False)
-    net_out.print_params(False)
+    net_out.print_weights(False)
 
     # Inference Data Placeholders
     encode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="encode_seqs")
     decode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="decode_seqs")
 
-    net, net_rnn = create_model(encode_seqs2, decode_seqs2, src_vocab_size, emb_dim, is_train=(not inference_mode), reuse=True)
+    net, net_rnn = create_model(encode_seqs2, decode_seqs2, src_vocab_size, emb_dim, is_train=False, reuse=True)
     y = tf.nn.softmax(net.outputs)
 
     # Loss Function
@@ -217,10 +220,10 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
                 encode_sequence_length = retrieve_seq_length_op2(encode_seqs),
                 decode_sequence_length = retrieve_seq_length_op2(decode_seqs),
                 initial_state_encode = None,
-                dropout = (0.5 if is_train else None),
+                dropout = 0.5, #(0.5 if is_train else None),
                 n_layer = 3,
                 return_seq_2d = True,
-                name = 'seq2seq')(net_encode, net_decode)
+                name = 'seq2seq')(net_encode, net_decode, is_train=is_train)
 
         net_out = DenseLayer(n_units=src_vocab_size, act=tf.identity, name='output')(net_rnn)
     return net_out, net_rnn
