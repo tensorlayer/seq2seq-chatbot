@@ -22,19 +22,9 @@ This is a 200 lines implementation of Twitter/Cornell-Movie Chatbot, please read
 </div>
 </table>
 
-### Training
-
-```
-python main.py --batch-size 32 --num-epochs 50 -lr 0.001
-```
-
-### Inference
-
-```
-python main.py --inference
-```
-
 ### Results
+
+<!---#### Twitter-->
 
 ```
 Query > happy birthday have a nice day
@@ -49,3 +39,13 @@ Query > donald trump won last nights presidential debate according to snap onlin
  > he is not a racist
  > he is a liar
  > trump needs to be president
+
+```
+<!---
+#### Cornell Moive
+
+
+```
+
+```
+-->
