@@ -142,11 +142,8 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
         print('--------------')
         while True:
             input_seq = input('Enter Query: ')
-            try:
-                sentence = inference(input_seq)
-                print(" >", ' '.join(sentence))
-            except KeyError:
-                print('Unknown token. Please try again!')
+            sentence = inference(input_seq)
+            print(" >", ' '.join(sentence))
     else:
         seeds = ["happy birthday have a nice day",
                  "donald trump won last nights presidential debate according to snap online polls"]
