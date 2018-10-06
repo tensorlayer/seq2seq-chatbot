@@ -113,7 +113,11 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     Inference using pre-trained model
     """
     def inference(seed):
+<<<<<<< HEAD
         seed_id = [word2idx.get(w, unk_id) for w in seed.split(" ")]
+=======
+        seed_id = [word2idx[w] for w in seed.split(" ")]
+>>>>>>> 14abd61bfca7a6de8292718143198131aea0cc4a
         # Encode and get state
         state = sess.run(net_rnn.final_state_encode,
                         {encode_seqs2: [seed_id]})
