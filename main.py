@@ -86,14 +86,14 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     target_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_seqs")
     target_mask = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_mask") 
 
-    net_out, _ = create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=(not inference_mode), reuse=False)
+    net_out, _ = create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=True, reuse=False)
     net_out.print_params(False)
 
     # Inference Data Placeholders
     encode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="encode_seqs")
     decode_seqs2 = tf.placeholder(dtype=tf.int64, shape=[1, None], name="decode_seqs")
 
-    net, net_rnn = create_model(encode_seqs2, decode_seqs2, src_vocab_size, emb_dim, is_train=(not inference_mode), reuse=True)
+    net, net_rnn = create_model(encode_seqs2, decode_seqs2, src_vocab_size, emb_dim, is_train=False, reuse=True)
     y = tf.nn.softmax(net.outputs)
 
     # Loss Function
@@ -113,7 +113,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     Inference using pre-trained model
     """
     def inference(seed):
-        seed_id = [word2idx[w] for w in seed.split(" ")]
+        seed_id = [word2idx.get(w, unk_id) for w in seed.split(" ")]
         # Encode and get state
         state = sess.run(net_rnn.final_state_encode,
                         {encode_seqs2: [seed_id]})
