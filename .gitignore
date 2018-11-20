@@ -12,5 +12,4 @@ data/.DS_Store
 *.gz
 .spyproject/
 .vscode/*
-model.npz
-/models
+chatbot.npz
