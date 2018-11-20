@@ -84,7 +84,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     encode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="encode_seqs")
     decode_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="decode_seqs")
     target_seqs = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_seqs")
-    target_mask = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_mask") 
+    target_mask = tf.placeholder(dtype=tf.int64, shape=[batch_size, None], name="target_mask")
 
     net_out, _ = create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=True, reuse=False)
     net_out.print_params(False)
@@ -97,7 +97,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     y = tf.nn.softmax(net.outputs)
 
     # Loss Function
-    loss = tl.cost.cross_entropy_seq_with_mask(logits=net_out.outputs, target_seqs=target_seqs, 
+    loss = tl.cost.cross_entropy_seq_with_mask(logits=net_out.outputs, target_seqs=target_seqs,
                                                 input_mask=target_mask, return_details=False, name='cost')
 
     # Optimizer
@@ -107,14 +107,14 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
     sess.run(tf.global_variables_initializer())
 
     # Load Model
-    tl.files.load_and_assign_npz(sess=sess, name='model.npz', network=net)
+    tl.files.load_and_assign_npz(sess=sess, name='/chatbot/models/chatbot.npz', network=net)
 
     """
     Inference using pre-trained model
     """
     def inference(seed):
         seed_id = [word2idx.get(w, unk_id) for w in seed.split(" ")]
-        
+
         # Encode and get state
         state = sess.run(net_rnn.final_state_encode,
                         {encode_seqs2: [seed_id]})
@@ -150,7 +150,7 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
         for epoch in range(num_epochs):
             trainX, trainY = shuffle(trainX, trainY, random_state=0)
             total_loss, n_iter = 0, 0
-            for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False), 
+            for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False),
                             total=n_step, desc='Epoch[{}/{}]'.format(epoch + 1, num_epochs), leave=False):
 
                 X = tl.prepro.pad_sequences(X)
@@ -174,17 +174,17 @@ def train(data_corpus, batch_size, num_epochs, learning_rate, inference_mode):
 
             # printing average loss after every epoch
             print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
-            
+
             # inference after every epoch
             for seed in seeds:
                 print("Query >", seed)
                 for _ in range(5):
                     sentence = inference(seed)
                     print(" >", ' '.join(sentence))
-            
+
             # saving the model
-            tl.files.save_npz(net.all_params, name='model.npz', sess=sess)
-    
+            tl.files.save_npz(net.all_params, name='/chatbot/models/chatbot.npz', sess=sess)
+
     # session cleanup
     sess.close()
 
@@ -207,7 +207,7 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
                 vocabulary_size = src_vocab_size,
                 embedding_size = emb_dim,
                 name = 'seq_embedding')
-            
+
         net_rnn = Seq2Seq(net_encode, net_decode,
                 cell_fn = tf.nn.rnn_cell.LSTMCell,
                 n_hidden = emb_dim,
@@ -227,7 +227,8 @@ def create_model(encode_seqs, decode_seqs, src_vocab_size, emb_dim, is_train=Tru
 Initial Setup
 """
 def initial_setup(data_corpus):
-    metadata, idx_q, idx_a = data.load_data(PATH='data/{}/'.format(data_corpus))
+    #metadata, idx_q, idx_a = data.load_data(PATH='data/{}/'.format(data_corpus))
+    metadata, idx_q, idx_a = data.load_data(PATH='./data/twitter/')
     (trainX, trainY), (testX, testY), (validX, validY) = data.split_dataset(idx_q, idx_a)
     trainX = tl.prepro.remove_pad_sequences(trainX.tolist())
     trainY = tl.prepro.remove_pad_sequences(trainY.tolist())
