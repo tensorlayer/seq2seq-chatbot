@@ -32,6 +32,6 @@ RUN pip3 install --requirement /tmp/requirements.txt
 COPY . /chatbot
 
 WORKDIR /chatbot
-#RUN python3 main.py --batch-size 32 --num-epochs 1 -lr 0.001
+RUN python3 main.py --batch-size 32 --num-epochs 1 -lr 0.001
 
 CMD python3 main.py --inference-mode
