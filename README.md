@@ -31,7 +31,7 @@ python main.py --batch-size 32 --num-epochs 50 -lr 0.001
 ### Inference
 
 ```
-python main.py --inference
+python main.py --inference-mode
 ```
 
 ### Results
