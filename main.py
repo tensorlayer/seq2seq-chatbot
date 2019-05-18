@@ -8,7 +8,7 @@ from loss import cross_entropy_seq
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from data.twitter import data
-from model_seq2seq import Seq2seq
+from model_seq2seq import Seq2seq_
 
 
 def initial_setup(data_corpus):
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         return sentence
 
     
-    model_ = Seq2seq(
+    model_ = Seq2seq_(
         batch_size = batch_size,
         cell_enc=tf.keras.layers.SimpleRNNCell(units=3),
         cell_dec=tf.keras.layers.SimpleRNNCell(units=3), 

@@ -9,7 +9,7 @@ from tensorlayer.layers import Dense, Dropout, Input
 from tensorlayer.layers.core import Layer
 
 
-class Seq2seq(Model):
+class Seq2seq_(Model):
     def __init__(
             self,
             batch_size,
@@ -19,7 +19,7 @@ class Seq2seq(Model):
             is_train=True,
             name="seq2seq"
     ):
-        super(Seq2seq, self).__init__(name=name)
+        super(Seq2seq_, self).__init__(name=name)
         self.embedding_layer = embedding_layer
         self.vocabulary_size = embedding_layer.vocabulary_size
         self.embedding_size = embedding_layer.embedding_size
