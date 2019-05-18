@@ -106,8 +106,8 @@ if __name__ == "__main__":
                 ## compute loss and update model
                 loss = cross_entropy_seq(output, _target_seqs)
 
-                grad = tape.gradient(loss, model_.weights)
-                optimizer.apply_gradients(zip(grad, model_.weights))
+                grad = tape.gradient(loss, model_.all_weights)
+                optimizer.apply_gradients(zip(grad, model_.all_weights))
 
             total_loss += loss
             n_iter += 1
