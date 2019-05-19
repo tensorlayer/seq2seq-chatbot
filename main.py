@@ -4,11 +4,14 @@
 import tensorflow as tf
 import tensorlayer as tl
 import numpy as np
-from loss import cross_entropy_seq
+from loss import cross_entropy_seq, cross_entropy_seq_with_mask
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from data.twitter import data
 from model_seq2seq import Seq2seq_
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID" # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 
 def initial_setup(data_corpus):
@@ -25,7 +28,6 @@ def initial_setup(data_corpus):
 
 
 if __name__ == "__main__":
-    batch_size = 32
     data_corpus = "twitter"
     #data preprocessing
     metadata, trainX, trainY, testX, testY, validX, validY = initial_setup(data_corpus)
@@ -36,6 +38,7 @@ if __name__ == "__main__":
 
     assert src_len == tgt_len
 
+    batch_size = 32
     n_step = src_len // batch_size
     src_vocab_size = len(metadata['idx2w']) # 8002 (0~8001)
     emb_dim = 1024
@@ -55,15 +58,15 @@ if __name__ == "__main__":
 
     src_vocab_size = tgt_vocab_size = src_vocab_size + 2
 
-    num_epochs = 5
+    num_epochs = 100
     vocabulary_size = src_vocab_size
-    batch_size = 32
+    
 
 
     def inference(seed):
         model_.eval()
         seed_id = [word2idx.get(w, unk_id) for w in seed.split(" ")]
-        sentence_id = model_(inputs=[seed_id], seq_length=8, start_token=start_id)
+        sentence_id = model_(inputs=[seed_id], seq_length=30, start_token=start_id)
         sentence = []
         for w_id in sentence_id[0]:
             w = idx2word[w_id]
@@ -89,14 +92,16 @@ if __name__ == "__main__":
         model_.train()
         trainX, trainY = shuffle(trainX, trainY, random_state=0)
         total_loss, n_iter = 0, 0
-        for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX[:100], targets=trainY[:100], batch_size=batch_size, shuffle=False), 
+        for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False), 
                         total=n_step, desc='Epoch[{}/{}]'.format(epoch + 1, num_epochs), leave=False):
 
             X = tl.prepro.pad_sequences(X)
             _target_seqs = tl.prepro.sequences_add_end_id(Y, end_id=end_id)
             _target_seqs = tl.prepro.pad_sequences(_target_seqs)
+            
             _decode_seqs = tl.prepro.sequences_add_start_id(Y, start_id=start_id, remove_last=False)
             _decode_seqs = tl.prepro.pad_sequences(_decode_seqs)
+            _target_mask = tl.prepro.sequences_get_mask(_target_seqs)
 
             with tf.GradientTape() as tape:
                 ## compute outputs
@@ -104,7 +109,8 @@ if __name__ == "__main__":
                 
                 output = tf.reshape(output, [-1, vocabulary_size])
                 ## compute loss and update model
-                loss = cross_entropy_seq(output, _target_seqs)
+                #print(output, _target_seqs, _target_mask)
+                loss = cross_entropy_seq_with_mask(logits=output, target_seqs=_target_seqs, input_mask=_target_mask)
 
                 grad = tape.gradient(loss, model_.all_weights)
                 optimizer.apply_gradients(zip(grad, model_.all_weights))
