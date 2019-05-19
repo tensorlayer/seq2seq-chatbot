@@ -18,7 +18,8 @@ class Seq2seq_(Model):
             cell_dec,
             cell_enc,
             embedding_layer=None,
-            is_train=True
+            is_train=True,
+            name="seq2seq_"
     ):
         super(Seq2seq_, self).__init__(name=name)
         self.embedding_layer = embedding_layer
@@ -37,7 +38,7 @@ class Seq2seq_(Model):
         # after embedding the encoding sequence, start the encoding_RNN, then transfer the state to decoing_RNN
         after_embedding_encoding = self.embedding_layer(encoding)
 
-        enc_rnn_ouput, state = self.encoding_layer(after_embedding_encoding, return_last_state=True)
+        enc_rnn_ouput, state = self.encoding_layer(after_embedding_encoding, return_state=True)
 
         
         # for the start_token, first create a batch of it, get[Batchsize, 1]. 
