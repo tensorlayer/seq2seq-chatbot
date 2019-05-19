@@ -18,8 +18,7 @@ class Seq2seq_(Model):
             cell_dec,
             cell_enc,
             embedding_layer=None,
-            is_train=True,
-            name="seq2seq_"
+            is_train=True
     ):
         super(Seq2seq_, self).__init__(name=name)
         self.embedding_layer = embedding_layer
