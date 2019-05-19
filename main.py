@@ -92,7 +92,7 @@ if __name__ == "__main__":
         model_.train()
         trainX, trainY = shuffle(trainX, trainY, random_state=0)
         total_loss, n_iter = 0, 0
-        for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False), 
+        for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX[:50], targets=trainY[:50], batch_size=batch_size, shuffle=False), 
                         total=n_step, desc='Epoch[{}/{}]'.format(epoch + 1, num_epochs), leave=False):
 
             X = tl.prepro.pad_sequences(X)
@@ -115,18 +115,22 @@ if __name__ == "__main__":
                 grad = tape.gradient(loss, model_.all_weights)
                 optimizer.apply_gradients(zip(grad, model_.all_weights))
                 
-
-            total_loss += loss
-            n_iter += 1
+            if (n_iter % 20 == 0):
+                print("loss               {:.4f}".format(loss))
+                print("================= ========= ========== ========== ============ =========== ========= ======= \n\n")
+                # inference after every epoch
+                for seed in seeds:
+                    print("Query >", seed)
+                    sentence = inference(seed)
+                    print(" >", ' '.join(sentence))
+                    total_loss += loss
+                    n_iter += 1
+                model_.train()
+                print("================= ========= ========== ========== ============ =========== ========= ======= \n\n")
         # printing average loss after every epoch
         print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
 
 
-        print("================= ========= ========== ========== ============ =========== ========= ======= \n\n")
-        # inference after every epoch
-        for seed in seeds:
-            print("Query >", seed)
-            sentence = inference(seed)
-            print(" >", ' '.join(sentence))
+        
     
     
