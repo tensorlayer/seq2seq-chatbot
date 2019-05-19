@@ -114,7 +114,9 @@ if __name__ == "__main__":
 
                 grad = tape.gradient(loss, model_.all_weights)
                 optimizer.apply_gradients(zip(grad, model_.all_weights))
-                
+            
+            total_loss += loss
+            n_iter += 1
             if (n_iter % 20 == 0):
                 print("loss               {:.4f}".format(loss))
                 print("================= ========= ========== ========== ============ =========== ========= ======= \n\n")
@@ -123,8 +125,7 @@ if __name__ == "__main__":
                     print("Query >", seed)
                     sentence = inference(seed)
                     print(" >", ' '.join(sentence))
-                    total_loss += loss
-                    n_iter += 1
+                    
                 model_.train()
                 print("================= ========= ========== ========== ============ =========== ========= ======= \n\n")
         # printing average loss after every epoch
