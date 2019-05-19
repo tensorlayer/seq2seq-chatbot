@@ -117,7 +117,7 @@ if __name__ == "__main__":
             
             total_loss += loss
             n_iter += 1
-            if (n_iter % 20 == 0):
+            if (n_iter % 100 == 0):
                 print("loss               {:.4f}".format(loss))
                 print("================= ========= ========== ========== ============ =========== ========= ======= \n\n")
                 # inference after every epoch
