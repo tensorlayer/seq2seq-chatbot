@@ -79,7 +79,7 @@ if __name__ == "__main__":
     model_ = Seq2seq_(
         batch_size = batch_size,
         cell_enc=tf.keras.layers.GRUCell(units=5),
-        cell_dec=tf.keras.layers.GRUCell(units=3), 
+        cell_dec=tf.keras.layers.GRUCell(units=5), 
         embedding_layer=tl.layers.Embedding(vocabulary_size=vocabulary_size, embedding_size=emb_dim),
         )
     
