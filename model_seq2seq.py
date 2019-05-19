@@ -25,10 +25,10 @@ class Seq2seq_(Model):
         self.embedding_layer = embedding_layer
         self.vocabulary_size = embedding_layer.vocabulary_size
         self.embedding_size = embedding_layer.embedding_size
-        self.encoding_layer = tl.layers.RNN(cell=cell_enc, in_channels=self.embedding_size, return_state=True)
+        self.encoding_layer = tl.layers.RNN(cell=cell_enc, in_channels=self.embedding_size, return_last_state=True)
         self.decoding_layer = tl.layers.RNN(cell=cell_dec, in_channels=self.embedding_size)
         self.reshape_layer = tl.layers.Reshape([-1, cell_dec.units])
-        self.dense_layer = tl.layers.Dense(n_units=self.vocabulary_size, act=tf.nn.softmax, in_channels=cell_dec.units)
+        self.dense_layer = tl.layers.Dense(n_units=self.vocabulary_size, in_channels=cell_dec.units)
         self.reshape_layer_after = tl.layers.Reshape([batch_size, -1, self.vocabulary_size])
         self.reshape_layer_individual_sequence = tl.layers.Reshape([-1, 1, self.vocabulary_size])
         
@@ -38,7 +38,7 @@ class Seq2seq_(Model):
         # after embedding the encoding sequence, start the encoding_RNN, then transfer the state to decoing_RNN
         after_embedding_encoding = self.embedding_layer(encoding)
 
-        enc_rnn_ouput, state = self.encoding_layer(after_embedding_encoding, return_state=True)
+        enc_rnn_ouput, state = self.encoding_layer(after_embedding_encoding, return_last_state=True)
 
         
         # for the start_token, first create a batch of it, get[Batchsize, 1]. 
