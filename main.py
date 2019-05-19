@@ -78,12 +78,12 @@ if __name__ == "__main__":
     
     model_ = Seq2seq_(
         batch_size = batch_size,
-        cell_enc=tf.keras.layers.SimpleRNNCell(units=3),
-        cell_dec=tf.keras.layers.SimpleRNNCell(units=3), 
+        cell_enc=tf.keras.layers.GRUCell(units=5),
+        cell_dec=tf.keras.layers.GRUCell(units=3), 
         embedding_layer=tl.layers.Embedding(vocabulary_size=vocabulary_size, embedding_size=emb_dim),
         )
     
-    optimizer = tf.optimizers.Adam(learning_rate=0.005)
+    optimizer = tf.optimizers.Adam(learning_rate=0.001)
     model_.train()
 
     seeds = ["happy birthday have a nice day",
@@ -114,6 +114,7 @@ if __name__ == "__main__":
 
                 grad = tape.gradient(loss, model_.all_weights)
                 optimizer.apply_gradients(zip(grad, model_.all_weights))
+                
 
             total_loss += loss
             n_iter += 1
