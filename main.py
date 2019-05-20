@@ -117,19 +117,13 @@ if __name__ == "__main__":
             
             total_loss += loss
             n_iter += 1
-            if (n_iter % 100 == 0):
-                print("loss               {:.4f}".format(loss))
-                print("================= ========= ========== ========== ============ =========== ========= ======= \n\n")
-                # inference after every epoch
-                for seed in seeds:
-                    print("Query >", seed)
-                    sentence = inference(seed)
-                    print(" >", ' '.join(sentence))
-                    
-                model_.train()
-                print("================= ========= ========== ========== ============ =========== ========= ======= \n\n")
         # printing average loss after every epoch
         print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
+
+        for seed in seeds:
+            print("Query >", seed)
+            sentence = inference(seed)
+            print(" >", ' '.join(sentence))
 
 
         
