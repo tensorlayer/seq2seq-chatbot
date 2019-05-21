@@ -31,6 +31,7 @@ if __name__ == "__main__":
     data_corpus = "twitter"
     #data preprocessing
     metadata, trainX, trainY, testX, testY, validX, validY = initial_setup(data_corpus)
+
     # Parameters
     src_len = len(trainX)
     tgt_len = len(trainY)
@@ -57,16 +58,10 @@ if __name__ == "__main__":
 
     src_vocab_size = tgt_vocab_size = src_vocab_size + 2
 
-    num_epochs = 10000
+    num_epochs = 100
     vocabulary_size = src_vocab_size
     
-    vocabulary_size = 30
-    emb_dim = 50
-    trainX = np.random.randint(20, size=(50, 5))
-    trainY = np.random.randint(20, size=(50, 3))
-    dec_seq = trainY(:,1:)
-    target_seq = trainY(:, :-1)
-    
+
 
     def inference(seed):
         model_.eval()
@@ -100,23 +95,22 @@ if __name__ == "__main__":
         for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False), 
                         total=n_step, desc='Epoch[{}/{}]'.format(epoch + 1, num_epochs), leave=False):
 
-            # X = tl.prepro.pad_sequences(X)
-            # _target_seqs = tl.prepro.sequences_add_end_id(Y, end_id=end_id)
-            # _target_seqs = tl.prepro.pad_sequences(_target_seqs)
+            X = tl.prepro.pad_sequences(X)
+            _target_seqs = tl.prepro.sequences_add_end_id(Y, end_id=end_id)
+            _target_seqs = tl.prepro.pad_sequences(_target_seqs)
             
-            # _decode_seqs = tl.prepro.sequences_add_start_id(Y, start_id=start_id, remove_last=False)
-            # _decode_seqs = tl.prepro.pad_sequences(_decode_seqs)
-            # _target_mask = tl.prepro.sequences_get_mask(_target_seqs)
-            with tf.GradientTape() as tape:
+            _decode_seqs = tl.prepro.sequences_add_start_id(Y, start_id=start_id, remove_last=False)
+            _decode_seqs = tl.prepro.pad_sequences(_decode_seqs)
+            _target_mask = tl.prepro.sequences_get_mask(_target_seqs)
 
+            with tf.GradientTape() as tape:
                 ## compute outputs
-                # output = model_(inputs = [X, _decode_seqs])
-                output = model_(inputs=[X, Y[:,:-1]])  
+                output = model_(inputs = [X, _decode_seqs])
+                
                 output = tf.reshape(output, [-1, vocabulary_size])
-                loss = cross_entropy_seq(logits=output, target_seqs=Y[:,1:])
                 ## compute loss and update model
                 #print(output, _target_seqs, _target_mask)
-                # loss = cross_entropy_seq_with_mask(logits=output, target_seqs=_target_seqs, input_mask=_target_mask)
+                loss = cross_entropy_seq_with_mask(logits=output, target_seqs=_target_seqs, input_mask=_target_mask)
 
                 grad = tape.gradient(loss, model_.all_weights)
                 optimizer.apply_gradients(zip(grad, model_.all_weights))
@@ -126,10 +120,10 @@ if __name__ == "__main__":
         # printing average loss after every epoch
         print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
 
-        # for seed in seeds:
-        #     print("Query >", seed)
-        #     sentence = inference(seed)
-        #     print(" >", ' '.join(sentence))
+        for seed in seeds:
+            print("Query >", seed)
+            sentence = inference(seed)
+            print(" >", ' '.join(sentence))
 
 
         
