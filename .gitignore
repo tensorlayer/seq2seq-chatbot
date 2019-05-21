@@ -15,3 +15,4 @@ data/.DS_Store
 model.npz
 env/
 venv/
+.idea/
