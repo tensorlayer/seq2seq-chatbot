@@ -13,3 +13,5 @@ data/.DS_Store
 .spyproject/
 .vscode/*
 model.npz
+env/
+venv/
