@@ -8,7 +8,7 @@ from loss import cross_entropy_seq, cross_entropy_seq_with_mask
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from data.twitter import data
-from model_seq2seq import Seq2seq_
+from model_seq2seq_beam_search import Seq2seq_
 import os
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID" # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     def inference(seed):
         model_.eval()
         seed_id = [word2idx.get(w, unk_id) for w in seed.split(" ")]
-        sentence_id = model_(inputs=[seed_id], seq_length=30, start_token=start_id)
+        sentence_id = model_(inputs=[seed_id], seq_length=30, beam_size=3, start_token=start_id)
         sentence = []
         for w_id in sentence_id[0]:
             w = idx2word[w_id]
@@ -78,8 +78,8 @@ if __name__ == "__main__":
     
     model_ = Seq2seq_(
         batch_size = batch_size,
-        cell_enc=tf.keras.layers.GRUCell(units=5),
-        cell_dec=tf.keras.layers.GRUCell(units=5), 
+        cell_enc=tf.keras.layers.GRUCell(units=256),
+        cell_dec=tf.keras.layers.GRUCell(units=256), 
         embedding_layer=tl.layers.Embedding(vocabulary_size=vocabulary_size, embedding_size=emb_dim),
         )
     
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         model_.train()
         trainX, trainY = shuffle(trainX, trainY, random_state=0)
         total_loss, n_iter = 0, 0
-        for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False), 
+        for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX[:50], targets=trainY[:50], batch_size=batch_size, shuffle=False), 
                         total=n_step, desc='Epoch[{}/{}]'.format(epoch + 1, num_epochs), leave=False):
 
             X = tl.prepro.pad_sequences(X)

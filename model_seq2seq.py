@@ -17,6 +17,7 @@ class Seq2seq_(Model):
             batch_size,
             cell_dec,
             cell_enc,
+            n_layer=3,
             embedding_layer=None,
             is_train=True,
             name="seq2seq_"
@@ -25,8 +26,18 @@ class Seq2seq_(Model):
         self.embedding_layer = embedding_layer
         self.vocabulary_size = embedding_layer.vocabulary_size
         self.embedding_size = embedding_layer.embedding_size
-        self.encoding_layer = tl.layers.RNN(cell=cell_enc, in_channels=self.embedding_size, return_last_state=True)
-        self.decoding_layer = tl.layers.RNN(cell=cell_dec, in_channels=self.embedding_size)
+
+
+        self.encoding_layer_0 = tl.layers.RNN(cell=cell_enc, in_channels=self.embedding_size, return_last_state=True)
+        self.encoding_layer_1 = tl.layers.RNN(cell=cell_enc, return_last_state=True)
+        self.encoding_layer_2 = tl.layers.RNN(cell=cell_enc, return_last_state=True)
+
+
+        self.decoding_layer_0 = tl.layers.RNN(cell=cell_dec, in_channels=self.embedding_size, return_last_state=True)
+        self.decoding_layer_1 = tl.layers.RNN(cell=cell_dec, return_last_state=True)
+        self.decoding_layer_2 = tl.layers.RNN(cell=cell_dec, return_last_state=True)
+
+
         self.reshape_layer = tl.layers.Reshape([-1, cell_dec.units])
         self.dense_layer = tl.layers.Dense(n_units=self.vocabulary_size, in_channels=cell_dec.units)
         self.reshape_layer_after = tl.layers.Reshape([batch_size, -1, self.vocabulary_size])
