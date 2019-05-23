@@ -11,7 +11,7 @@ def sequence_loss_by_example(logits,
                              average_across_timesteps=True,
                              softmax_loss_function=None,
                              name=None):
-  """Weighted cross-entropy loss for a sequence of logits (per example).
+    """Weighted cross-entropy loss for a sequence of logits (per example).
   Args:
     logits: List of 2D Tensors of shape [batch_size x num_decoder_symbols].
     targets: List of 1D batch-sized int32 Tensors of the same length as logits.
@@ -28,36 +28,36 @@ def sequence_loss_by_example(logits,
   Raises:
     ValueError: If len(logits) is different from len(targets) or len(weights).
   """
-  if len(targets) != len(logits) or len(weights) != len(logits):
-    raise ValueError("Lengths of logits, weights, and targets must be the same "
-                     "%d, %d, %d." % (len(logits), len(weights), len(targets)))
-  with ops.name_scope(name, "sequence_loss_by_example",
-                      logits + targets + weights):
-    log_perp_list = []
-    for logit, target, weight in zip(logits, targets, weights):
-      if softmax_loss_function is None:
-        # TODO(irving,ebrevdo): This reshape is needed because
-        # sequence_loss_by_example is called with scalars sometimes, which
-        # violates our general scalar strictness policy.
-        target = array_ops.reshape(target, [-1])
-        crossent = nn_ops.sparse_softmax_cross_entropy_with_logits(
-            labels=target, logits=logit)
-      else:
-        crossent = softmax_loss_function(labels=target, logits=logit)
-      
-      # print("crossent = ", crossent)
-      log_perp_list.append(crossent * weight)
-    log_perps = math_ops.add_n(log_perp_list)
-    if average_across_timesteps:
-      total_size = math_ops.add_n(weights)
-      total_size += 1e-12  # Just to avoid division by 0 for all-0 weights.
-      log_perps /= total_size
-  return log_perps
+    if len(targets) != len(logits) or len(weights) != len(logits):
+        raise ValueError(
+            "Lengths of logits, weights, and targets must be the same "
+            "%d, %d, %d." % (len(logits), len(weights), len(targets)))
+    with ops.name_scope(name, "sequence_loss_by_example",
+                        logits + targets + weights):
+        log_perp_list = []
+        for logit, target, weight in zip(logits, targets, weights):
+            if softmax_loss_function is None:
+                # TODO(irving,ebrevdo): This reshape is needed because
+                # sequence_loss_by_example is called with scalars sometimes, which
+                # violates our general scalar strictness policy.
+                target = array_ops.reshape(target, [-1])
+                crossent = nn_ops.sparse_softmax_cross_entropy_with_logits(
+                    labels=target, logits=logit)
+            else:
+                crossent = softmax_loss_function(labels=target, logits=logit)
+
+            # print("crossent = ", crossent)
+            log_perp_list.append(crossent * weight)
+        log_perps = math_ops.add_n(log_perp_list)
+        if average_across_timesteps:
+            total_size = math_ops.add_n(weights)
+            total_size += 1e-12  # Just to avoid division by 0 for all-0 weights.
+            log_perps /= total_size
+    return log_perps
 
 
-
-
-def cross_entropy_seq(logits, target_seqs, batch_size=None):  # , batch_size=1, num_steps=None):
+def cross_entropy_seq(logits, target_seqs,
+                      batch_size=None):  # , batch_size=1, num_steps=None):
     """Returns the expression of cross-entropy of two sequences, implement
     softmax internally. Normally be used for fixed length RNN outputs, see `PTB example <https://github.com/tensorlayer/tensorlayer/blob/master/example/tutorial_ptb_lstm_state_is_tuple.py>`__.
 
@@ -87,8 +87,8 @@ def cross_entropy_seq(logits, target_seqs, batch_size=None):  # , batch_size=1, 
     sequence_loss_by_example_fn = sequence_loss_by_example
 
     loss = sequence_loss_by_example_fn(
-        [logits], [tf.reshape(target_seqs, [-1])], [tf.ones_like(tf.reshape(target_seqs, [-1]), dtype=tf.float32)]
-    )
+        [logits], [tf.reshape(target_seqs, [-1])],
+        [tf.ones_like(tf.reshape(target_seqs, [-1]), dtype=tf.float32)])
     # [tf.ones([batch_size * num_steps])])
     cost = tf.reduce_sum(loss)  # / batch_size
     if batch_size is not None:
@@ -96,8 +96,11 @@ def cross_entropy_seq(logits, target_seqs, batch_size=None):  # , batch_size=1, 
     return cost
 
 
-
-def cross_entropy_seq_with_mask(logits, target_seqs, input_mask, return_details=False, name=None):
+def cross_entropy_seq_with_mask(logits,
+                                target_seqs,
+                                input_mask,
+                                return_details=False,
+                                name=None):
     """Returns the expression of cross-entropy of two sequences, implement
     softmax internally. Normally be used for Dynamic RNN with Synced sequence input and output.
 
@@ -145,16 +148,19 @@ def cross_entropy_seq_with_mask(logits, target_seqs, input_mask, return_details=
     """
     logits = tf.cast(logits, tf.float64)
     targets = tf.reshape(target_seqs, [-1])  # to one vector
-    weights = tf.cast(tf.reshape(input_mask, [-1]), tf.float64)  # to one vector like targets
-    losses = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=targets, name=name) * weights
+    weights = tf.cast(tf.reshape(input_mask, [-1]),
+                      tf.float64)  # to one vector like targets
+    losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=logits, labels=targets, name=name) * weights
     # print(logits, losses, weights, targets)
     # losses = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=targets, name=name)) # for TF1.0 and others
 
     loss = tf.divide(
-        tf.reduce_sum(losses),  # loss from mask. reduce_sum before element-wise mul with mask !!
+        tf.reduce_sum(
+            losses
+        ),  # loss from mask. reduce_sum before element-wise mul with mask !!
         tf.reduce_sum(weights),
-        name="seq_loss_with_mask"
-    )
+        name="seq_loss_with_mask")
 
     if return_details:
         return loss, losses, weights, targets

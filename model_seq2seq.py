@@ -8,8 +8,9 @@ from tensorlayer.models import Model
 from tensorlayer.layers import Dense, Dropout, Input
 from tensorlayer.layers.core import Layer
 import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID" # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 class Seq2seq_(Model):
     def __init__(
@@ -43,7 +44,6 @@ class Seq2seq_(Model):
         self.dense_layer = tl.layers.Dense(n_units=self.vocabulary_size, in_channels=n_units)
         self.reshape_layer_after = tl.layers.Reshape([batch_size, -1, self.vocabulary_size])
         self.reshape_layer_individual_sequence = tl.layers.Reshape([-1, 1, self.vocabulary_size])
-        
 
     def inference(self, encoding, seq_length, start_token):
 
@@ -54,8 +54,7 @@ class Seq2seq_(Model):
         enc_rnn_output, state_1 = self.encoding_layer_1(enc_rnn_output, return_state=True)
         enc_rnn_output, state_2 = self.encoding_layer_2(enc_rnn_output, return_state=True)
 
-        
-        # for the start_token, first create a batch of it, get[Batchsize, 1]. 
+        # for the start_token, first create a batch of it, get[Batchsize, 1].
         # then embbeding, get[Batchsize, 1, embeddingsize]
         # then RNN, get[Batchsize, 1, RNN_units]
         # then reshape, get[Batchsize*1, RNN_units]
@@ -64,9 +63,13 @@ class Seq2seq_(Model):
         # finally, get Argmax of the last dimension, get next_sequence[Batchsize, 1]
         # this next_sequence will repeat above procedure for the sequence_length time
 
-        
         batch_size = len(encoding)
         decoding = [[start_token] for i in range(batch_size)]
+<<<<<<< HEAD
+=======
+        decoding = np.array(decoding)
+
+>>>>>>> 9019ac91d0a5e9839bf5037f9e793eff3d1f38c9
         after_embedding_decoding = self.embedding_layer(decoding)
 
         feed_output, state_0 = self.decoding_layer_0(after_embedding_decoding, initial_state=state_0, return_state=True)
@@ -76,12 +79,17 @@ class Seq2seq_(Model):
         feed_output = self.reshape_layer(feed_output)
         feed_output = self.dense_layer(feed_output)
         feed_output = self.reshape_layer_individual_sequence(feed_output)
+<<<<<<< HEAD
         #print(feed_output)
         feed_output = tf.argmax(feed_output, 2)
         #print(feed_output)
+=======
+        feed_output = tf.argmax(feed_output, -1)
+
+>>>>>>> 9019ac91d0a5e9839bf5037f9e793eff3d1f38c9
         final_output = feed_output
-        
-        for i in range(seq_length-1):
+
+        for i in range(seq_length - 1):
             feed_output = self.embedding_layer(feed_output)
             feed_output, state_0 = self.decoding_layer_0(feed_output, initial_state=state_0, return_state=True)
             feed_output, state_1 = self.decoding_layer_1(feed_output, initial_state=state_1, return_state=True)
@@ -90,14 +98,15 @@ class Seq2seq_(Model):
             feed_output = self.dense_layer(feed_output)
             feed_output = self.reshape_layer_individual_sequence(feed_output)
             feed_output = tf.argmax(feed_output, -1)
-            final_output = tf.concat([final_output,feed_output], 1)
-
+            final_output = tf.concat([final_output, feed_output], 1)
 
         return final_output, [state_0, state_1, state_2]
 
-
-    def forward(self, inputs, seq_length=8, start_token=None, return_state=False):
-
+    def forward(self,
+                inputs,
+                seq_length=8,
+                start_token=None,
+                return_state=False):
 
         if (self.is_train):
             encoding = inputs[0]
