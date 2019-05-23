@@ -77,12 +77,13 @@ if __name__ == "__main__":
         return sentence
 
     model_ = Seq2seq_(
-        batch_size=batch_size,
-        cell_enc=tf.keras.layers.GRUCell(units=5),
-        cell_dec=tf.keras.layers.GRUCell(units=5),
-        embedding_layer=tl.layers.Embedding(
-            vocabulary_size=vocabulary_size, embedding_size=emb_dim),
-    )
+        batch_size = batch_size,
+        cell_enc=tf.keras.layers.GRUCell,
+        cell_dec=tf.keras.layers.GRUCell,
+        n_layer=3,
+        n_units=256,
+        embedding_layer=tl.layers.Embedding(vocabulary_size=vocabulary_size, embedding_size=emb_dim),
+        )
 
     optimizer = tf.optimizers.Adam(learning_rate=0.001)
     model_.train()

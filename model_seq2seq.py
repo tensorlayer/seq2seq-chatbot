@@ -13,38 +13,46 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 class Seq2seq_(Model):
-    def __init__(self,
-                 batch_size,
-                 cell_dec,
-                 cell_enc,
-                 embedding_layer=None,
-                 is_train=True,
-                 name="seq2seq_"):
+    def __init__(
+            self,
+            batch_size,
+            cell_enc,
+            cell_dec,
+            n_units=256,
+            n_layer=3,
+            embedding_layer=None,
+            is_train=True,
+            name="seq2seq_"
+    ):
         super(Seq2seq_, self).__init__(name=name)
         self.embedding_layer = embedding_layer
         self.vocabulary_size = embedding_layer.vocabulary_size
         self.embedding_size = embedding_layer.embedding_size
-        self.encoding_layer = tl.layers.RNN(
-            cell=cell_enc,
-            in_channels=self.embedding_size,
-            return_last_state=True)
-        self.decoding_layer = tl.layers.RNN(
-            cell=cell_dec, in_channels=self.embedding_size)
-        self.reshape_layer = tl.layers.Reshape([-1, cell_dec.units])
-        self.dense_layer = tl.layers.Dense(
-            n_units=self.vocabulary_size, in_channels=cell_dec.units)
-        self.reshape_layer_after = tl.layers.Reshape(
-            [batch_size, -1, self.vocabulary_size])
-        self.reshape_layer_individual_sequence = tl.layers.Reshape(
-            [-1, 1, self.vocabulary_size])
+
+        # Could we modify it as a list of layers with self-designed n_layers in the building stage?
+        self.encoding_layer_0 = tl.layers.RNN(cell=cell_enc(units=n_units), in_channels=self.embedding_size, return_last_state=True)
+        self.encoding_layer_1 = tl.layers.RNN(cell=cell_enc(units=n_units), in_channels=n_units, return_last_state=True)
+        self.encoding_layer_2 = tl.layers.RNN(cell=cell_enc(units=n_units), in_channels=n_units, return_last_state=True)
+
+
+        self.decoding_layer_0 = tl.layers.RNN(cell=cell_dec(units=n_units), in_channels=self.embedding_size, return_last_state=True)
+        self.decoding_layer_1 = tl.layers.RNN(cell=cell_dec(units=n_units), in_channels=n_units, return_last_state=True)
+        self.decoding_layer_2 = tl.layers.RNN(cell=cell_dec(units=n_units), in_channels=n_units, return_last_state=True)
+
+
+        self.reshape_layer = tl.layers.Reshape([-1, n_units])
+        self.dense_layer = tl.layers.Dense(n_units=self.vocabulary_size, in_channels=n_units)
+        self.reshape_layer_after = tl.layers.Reshape([batch_size, -1, self.vocabulary_size])
+        self.reshape_layer_individual_sequence = tl.layers.Reshape([-1, 1, self.vocabulary_size])
 
     def inference(self, encoding, seq_length, start_token):
 
         # after embedding the encoding sequence, start the encoding_RNN, then transfer the state to decoing_RNN
         after_embedding_encoding = self.embedding_layer(encoding)
 
-        enc_rnn_ouput, state = self.encoding_layer(
-            after_embedding_encoding, return_state=True)
+        enc_rnn_output, state = self.encoding_layer_0(after_embedding_encoding, return_state=True)
+        enc_rnn_output, state = self.encoding_layer_1(enc_rnn_output, return_state=True)
+        enc_rnn_output, state = self.encoding_layer_2(enc_rnn_output, return_state=True)
 
         # for the start_token, first create a batch of it, get[Batchsize, 1].
         # then embbeding, get[Batchsize, 1, embeddingsize]
@@ -61,8 +69,10 @@ class Seq2seq_(Model):
 
         after_embedding_decoding = self.embedding_layer(decoding)
 
-        feed_output, state = self.decoding_layer(
-            after_embedding_decoding, initial_state=state, return_state=True)
+        feed_output, state = self.decoding_layer_0(after_embedding_decoding, initial_state=state, return_state=True)
+        feed_output, state = self.decoding_layer_1(feed_output, initial_state=state, return_state=True)
+        feed_output, state = self.decoding_layer_2(feed_output, initial_state=state, return_state=True)
+
         feed_output = self.reshape_layer(feed_output)
         feed_output = self.dense_layer(feed_output)
         feed_output = self.reshape_layer_individual_sequence(feed_output)
@@ -72,8 +82,9 @@ class Seq2seq_(Model):
 
         for i in range(seq_length - 1):
             feed_output = self.embedding_layer(feed_output)
-            feed_output, state = self.decoding_layer(
-                feed_output, state, return_state=True)
+            feed_output, state = self.decoding_layer_0(feed_output, initial_state=state, return_state=True)
+            feed_output, state = self.decoding_layer_1(feed_output, initial_state=state, return_state=True)
+            feed_output, state = self.decoding_layer_2(feed_output, initial_state=state, return_state=True)
             feed_output = self.reshape_layer(feed_output)
             feed_output = self.dense_layer(feed_output)
             feed_output = self.reshape_layer_individual_sequence(feed_output)
@@ -93,13 +104,19 @@ class Seq2seq_(Model):
             after_embedding_encoding = self.embedding_layer(encoding)
             decoding = inputs[1]
             after_embedding_decoding = self.embedding_layer(decoding)
-            enc_rnn_output, state = self.encoding_layer(
-                after_embedding_encoding, return_state=True)
 
-            dec_rnn_output, state = self.decoding_layer(
-                after_embedding_decoding,
-                initial_state=state,
-                return_state=True)
+            enc_rnn_output, state = self.encoding_layer_0(after_embedding_encoding, return_state=True)
+            enc_rnn_output, state = self.encoding_layer_1(enc_rnn_output, return_state=True)
+            enc_rnn_output, state = self.encoding_layer_2(enc_rnn_output, return_state=True)
+
+
+
+            decoding = inputs[1]
+            after_embedding_decoding = self.embedding_layer(decoding)
+            dec_rnn_output, state = self.decoding_layer_0(after_embedding_decoding, initial_state=state, return_state=True)
+            dec_rnn_output, state = self.decoding_layer_1(dec_rnn_output, initial_state=state, return_state=True)
+            dec_rnn_output, state = self.decoding_layer_2(dec_rnn_output, initial_state=state, return_state=True)
+
             dec_output = self.reshape_layer(dec_rnn_output)
             denser_output = self.dense_layer(dec_output)
             output = self.reshape_layer_after(denser_output)
