@@ -35,7 +35,7 @@ if __name__ == "__main__":
     n_step = src_len//batch_size
 
     model_ = Seq2seq_(
-        batch_size = batch_size,
+        decoder_seq_length = 4,
         cell_enc=tf.keras.layers.GRUCell,
         cell_dec=tf.keras.layers.GRUCell,
         n_layer=3,
@@ -74,8 +74,10 @@ if __name__ == "__main__":
 
         model_.eval()
         test_sample = trainX[0,:].tolist()
-        prediction = model_([test_sample], seq_length = 4, start_token = 0)
-        print(prediction, trainY[0,1:])
+        top_n = 1
+        for i in range(top_n):
+            prediction = model_([test_sample], seq_length = 4, start_token = 0, top_n = top_n)
+            print(prediction, trainY[0,1:])
         # printing average loss after every epoch
         print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
 

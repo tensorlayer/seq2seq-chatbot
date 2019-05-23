@@ -15,7 +15,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 class Seq2seq_(Model):
     def __init__(
             self,
-            batch_size,
+            decoder_seq_length,
             cell_enc,
             cell_dec,
             n_units=256,
@@ -28,103 +28,109 @@ class Seq2seq_(Model):
         self.embedding_layer = embedding_layer
         self.vocabulary_size = embedding_layer.vocabulary_size
         self.embedding_size = embedding_layer.embedding_size
-
+        self.n_layer = n_layer
+        self.enc_layers = []
+        self.dec_layers = []
         # Could we modify it as a list of layers with self-designed n_layers in the building stage?
-        self.encoding_layer_0 = tl.layers.RNN(cell=cell_enc(units=n_units), in_channels=self.embedding_size, return_last_state=True)
-        self.encoding_layer_1 = tl.layers.RNN(cell=cell_enc(units=n_units), in_channels=n_units, return_last_state=True)
-        self.encoding_layer_2 = tl.layers.RNN(cell=cell_enc(units=n_units), in_channels=n_units, return_last_state=True)
+        for i in range(n_layer):
+            if (i == 0):
+                self.enc_layers.append(tl.layers.RNN(cell=cell_enc(units=n_units), in_channels=self.embedding_size, return_last_state=True))
+            else:
+                self.enc_layers.append(tl.layers.RNN(cell=cell_enc(units=n_units), in_channels=n_units, return_last_state=True))
 
+        for i in range(n_layer):
+            if (i == 0):
+                self.dec_layers.append(tl.layers.RNN(cell=cell_dec(units=n_units), in_channels=self.embedding_size, return_last_state=True))
+            else:
+                self.dec_layers.append(tl.layers.RNN(cell=cell_dec(units=n_units), in_channels=n_units, return_last_state=True))
 
-        self.decoding_layer_0 = tl.layers.RNN(cell=cell_dec(units=n_units), in_channels=self.embedding_size, return_last_state=True)
-        self.decoding_layer_1 = tl.layers.RNN(cell=cell_dec(units=n_units), in_channels=n_units, return_last_state=True)
-        self.decoding_layer_2 = tl.layers.RNN(cell=cell_dec(units=n_units), in_channels=n_units, return_last_state=True)
 
 
         self.reshape_layer = tl.layers.Reshape([-1, n_units])
         self.dense_layer = tl.layers.Dense(n_units=self.vocabulary_size, in_channels=n_units)
-        self.reshape_layer_after = tl.layers.Reshape([batch_size, -1, self.vocabulary_size])
+        self.reshape_layer_after = tl.layers.Reshape([-1, decoder_seq_length, self.vocabulary_size])
         self.reshape_layer_individual_sequence = tl.layers.Reshape([-1, 1, self.vocabulary_size])
 
-    def inference(self, encoding, seq_length, start_token):
+    def inference(self, encoding, seq_length, start_token, top_n):
 
         # after embedding the encoding sequence, start the encoding_RNN, then transfer the state to decoing_RNN
-        after_embedding_encoding = self.embedding_layer(encoding)
+        feed_output = self.embedding_layer(encoding)
 
-        enc_rnn_output, state_0 = self.encoding_layer_0(after_embedding_encoding, return_state=True)
-        enc_rnn_output, state_1 = self.encoding_layer_1(enc_rnn_output, return_state=True)
-        enc_rnn_output, state_2 = self.encoding_layer_2(enc_rnn_output, return_state=True)
+        state = [None for i in range(self.n_layer)]
 
-        # for the start_token, first create a batch of it, get[Batchsize, 1].
-        # then embbeding, get[Batchsize, 1, embeddingsize]
-        # then RNN, get[Batchsize, 1, RNN_units]
-        # then reshape, get[Batchsize*1, RNN_units]
-        # then dense, get[Batchsize*1, vocabulary_size]
-        # then reshape, get[Batchsize, 1, vocabulary_size]
-        # finally, get Argmax of the last dimension, get next_sequence[Batchsize, 1]
-        # this next_sequence will repeat above procedure for the sequence_length time
+        for i in range(self.n_layer):
+            feed_output, state[i] = self.enc_layers[i](feed_output, return_state=True)
 
-        batch_size = len(encoding)
+        batch_size = len(encoding) 
         decoding = [[start_token] for i in range(batch_size)]
-        after_embedding_decoding = self.embedding_layer(decoding)
+        feed_output = self.embedding_layer(decoding)
 
-        feed_output, state_0 = self.decoding_layer_0(after_embedding_decoding, initial_state=state_0, return_state=True)
-        feed_output, state_1 = self.decoding_layer_1(feed_output, initial_state=state_1, return_state=True)
-        feed_output, state_2 = self.decoding_layer_2(feed_output, initial_state=state_2, return_state=True)
-
+        for i in range(self.n_layer):
+            feed_output, state[i] = self.dec_layers[i](feed_output, initial_state=state[i], return_state=True)
+        
         feed_output = self.reshape_layer(feed_output)
         feed_output = self.dense_layer(feed_output)
         feed_output = self.reshape_layer_individual_sequence(feed_output)
-        #print(feed_output)
-        feed_output = tf.argmax(feed_output, 2)
-        #print(feed_output)
-        final_output = feed_output
 
+        if (top_n is not None):
+            idx = np.argpartition(feed_output[0][0], -top_n)[-top_n:]
+            probs = [feed_output[0][0][i] for i in idx]
+            probs = probs / np.sum(probs)
+            feed_output = np.random.choice(idx, p=probs)
+            feed_output = tf.convert_to_tensor([[feed_output]])
+        else:
+            feed_output = tf.argmax(feed_output, -1)
+        final_output = feed_output
         for i in range(seq_length - 1):
             feed_output = self.embedding_layer(feed_output)
-            feed_output, state_0 = self.decoding_layer_0(feed_output, initial_state=state_0, return_state=True)
-            feed_output, state_1 = self.decoding_layer_1(feed_output, initial_state=state_1, return_state=True)
-            feed_output, state_2 = self.decoding_layer_2(feed_output, initial_state=state_2, return_state=True)
+            for i in range(self.n_layer):
+                feed_output, state[i] = self.dec_layers[i](feed_output, initial_state=state[i], return_state=True)
             feed_output = self.reshape_layer(feed_output)
             feed_output = self.dense_layer(feed_output)
             feed_output = self.reshape_layer_individual_sequence(feed_output)
-            feed_output = tf.argmax(feed_output, -1)
+
+            if (top_n is not None):
+                idx = np.argpartition(feed_output[0][0], -top_n)[-top_n:]
+                probs = [feed_output[0][0][i] for i in idx]
+                probs = probs / np.sum(probs)
+                feed_output = np.random.choice(idx, p=probs)
+                feed_output = [[feed_output]]
+            else:
+                feed_output = tf.argmax(feed_output, -1)
             final_output = tf.concat([final_output, feed_output], 1)
 
-        return final_output, [state_0, state_1, state_2]
+        return final_output, state
 
     def forward(self,
                 inputs,
                 seq_length=8,
                 start_token=None,
-                return_state=False):
+                return_state=False,
+                top_n = None):
 
+        state = [None for i in range(self.n_layer)]
         if (self.is_train):
             encoding = inputs[0]
-            after_embedding_encoding = self.embedding_layer(encoding)
-            decoding = inputs[1]
-            after_embedding_decoding = self.embedding_layer(decoding)
-
-            enc_rnn_output, state_0 = self.encoding_layer_0(after_embedding_encoding, return_state=True)
-            enc_rnn_output, state_1 = self.encoding_layer_1(enc_rnn_output, return_state=True)
-            enc_rnn_output, state_2 = self.encoding_layer_2(enc_rnn_output, return_state=True)
+            enc_output = self.embedding_layer(encoding)
 
 
+            for i in range(self.n_layer):
+                enc_output, state[i] = self.enc_layers[i](enc_output, return_state=True)
 
             decoding = inputs[1]
-            after_embedding_decoding = self.embedding_layer(decoding)
-            dec_rnn_output, state_0 = self.decoding_layer_0(after_embedding_decoding, initial_state=state_0, return_state=True)
-            dec_rnn_output, state_1 = self.decoding_layer_1(dec_rnn_output, initial_state=state_1, return_state=True)
-            dec_rnn_output, state_2 = self.decoding_layer_2(dec_rnn_output, initial_state=state_2, return_state=True)
+            dec_output = self.embedding_layer(decoding)
 
-            dec_output = self.reshape_layer(dec_rnn_output)
+            for i in range(self.n_layer):
+                dec_output, state[i] = self.dec_layers[i](dec_output, initial_state=state[i], return_state=True)
+
+            dec_output = self.reshape_layer(dec_output)
             denser_output = self.dense_layer(dec_output)
             output = self.reshape_layer_after(denser_output)
-            states = [state_0, state_1, state_2]
         else:
             encoding = inputs
-            output, states = self.inference(encoding, seq_length, start_token)
+            output, state = self.inference(encoding, seq_length, start_token, top_n)
 
         if (return_state):
-            return output, states
+            return output, state
         else:
             return output
