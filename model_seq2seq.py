@@ -65,11 +65,6 @@ class Seq2seq_(Model):
 
         batch_size = len(encoding)
         decoding = [[start_token] for i in range(batch_size)]
-<<<<<<< HEAD
-=======
-        decoding = np.array(decoding)
-
->>>>>>> 9019ac91d0a5e9839bf5037f9e793eff3d1f38c9
         after_embedding_decoding = self.embedding_layer(decoding)
 
         feed_output, state_0 = self.decoding_layer_0(after_embedding_decoding, initial_state=state_0, return_state=True)
@@ -79,14 +74,9 @@ class Seq2seq_(Model):
         feed_output = self.reshape_layer(feed_output)
         feed_output = self.dense_layer(feed_output)
         feed_output = self.reshape_layer_individual_sequence(feed_output)
-<<<<<<< HEAD
         #print(feed_output)
         feed_output = tf.argmax(feed_output, 2)
         #print(feed_output)
-=======
-        feed_output = tf.argmax(feed_output, -1)
-
->>>>>>> 9019ac91d0a5e9839bf5037f9e793eff3d1f38c9
         final_output = feed_output
 
         for i in range(seq_length - 1):
