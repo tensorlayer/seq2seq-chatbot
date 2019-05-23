@@ -20,8 +20,8 @@ if __name__ == "__main__":
     vocabulary_size=20
     emb_dim = 50
     trainX = np.random.randint(20, size=(50,5))
-    trainY = np.random.randint(20, size=(50,3))
-
+    trainY = np.random.randint(20, size=(50,5))
+    trainY[:,0] = 0
     
     # Parameters
     src_len = len(trainX)
@@ -54,8 +54,8 @@ if __name__ == "__main__":
         for X, Y in tqdm(tl.iterate.minibatches(inputs=trainX, targets=trainY, batch_size=batch_size, shuffle=False), 
                         total=n_step, desc='Epoch[{}/{}]'.format(epoch + 1, num_epochs), leave=False):
 
-            dec_seq = Y[:,1:]
-            target_seq = Y[:,:-1] 
+            dec_seq = Y[:,:-1]
+            target_seq = Y[:,1:] 
 
             with tf.GradientTape() as tape:
                 ## compute outputs
@@ -70,6 +70,12 @@ if __name__ == "__main__":
             
             total_loss += loss
             n_iter += 1
+        
+
+        model_.eval()
+        test_sample = trainX[0,:].tolist()
+        prediction = model_([test_sample], seq_length = 4, start_token = 0)
+        print(prediction, trainY[0,1:])
         # printing average loss after every epoch
         print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
 

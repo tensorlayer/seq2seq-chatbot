@@ -50,9 +50,9 @@ class Seq2seq_(Model):
         # after embedding the encoding sequence, start the encoding_RNN, then transfer the state to decoing_RNN
         after_embedding_encoding = self.embedding_layer(encoding)
 
-        enc_rnn_output, state = self.encoding_layer_0(after_embedding_encoding, return_state=True)
-        enc_rnn_output, state = self.encoding_layer_1(enc_rnn_output, return_state=True)
-        enc_rnn_output, state = self.encoding_layer_2(enc_rnn_output, return_state=True)
+        enc_rnn_output, state_0 = self.encoding_layer_0(after_embedding_encoding, return_state=True)
+        enc_rnn_output, state_1 = self.encoding_layer_1(enc_rnn_output, return_state=True)
+        enc_rnn_output, state_2 = self.encoding_layer_2(enc_rnn_output, return_state=True)
 
         
         # for the start_token, first create a batch of it, get[Batchsize, 1]. 
@@ -67,26 +67,25 @@ class Seq2seq_(Model):
         
         batch_size = len(encoding)
         decoding = [[start_token] for i in range(batch_size)]
-        decoding = np.array(decoding)
-        
         after_embedding_decoding = self.embedding_layer(decoding)
 
-        feed_output, state = self.decoding_layer_0(after_embedding_decoding, initial_state=state, return_state=True)
-        feed_output, state = self.decoding_layer_1(feed_output, initial_state=state, return_state=True)
-        feed_output, state = self.decoding_layer_2(feed_output, initial_state=state, return_state=True)
+        feed_output, state_0 = self.decoding_layer_0(after_embedding_decoding, initial_state=state_0, return_state=True)
+        feed_output, state_1 = self.decoding_layer_1(feed_output, initial_state=state_1, return_state=True)
+        feed_output, state_2 = self.decoding_layer_2(feed_output, initial_state=state_2, return_state=True)
 
         feed_output = self.reshape_layer(feed_output)
         feed_output = self.dense_layer(feed_output)
         feed_output = self.reshape_layer_individual_sequence(feed_output)
-        feed_output = tf.argmax(feed_output, -1)
-        
+        #print(feed_output)
+        feed_output = tf.argmax(feed_output, 2)
+        #print(feed_output)
         final_output = feed_output
         
         for i in range(seq_length-1):
             feed_output = self.embedding_layer(feed_output)
-            feed_output, state = self.decoding_layer_0(feed_output, initial_state=state, return_state=True)
-            feed_output, state = self.decoding_layer_1(feed_output, initial_state=state, return_state=True)
-            feed_output, state = self.decoding_layer_2(feed_output, initial_state=state, return_state=True)
+            feed_output, state_0 = self.decoding_layer_0(feed_output, initial_state=state_0, return_state=True)
+            feed_output, state_1 = self.decoding_layer_1(feed_output, initial_state=state_1, return_state=True)
+            feed_output, state_2 = self.decoding_layer_2(feed_output, initial_state=state_2, return_state=True)
             feed_output = self.reshape_layer(feed_output)
             feed_output = self.dense_layer(feed_output)
             feed_output = self.reshape_layer_individual_sequence(feed_output)
@@ -94,7 +93,7 @@ class Seq2seq_(Model):
             final_output = tf.concat([final_output,feed_output], 1)
 
 
-        return final_output, state
+        return final_output, [state_0, state_1, state_2]
 
 
     def forward(self, inputs, seq_length=8, start_token=None, return_state=False):
@@ -106,26 +105,27 @@ class Seq2seq_(Model):
             decoding = inputs[1]
             after_embedding_decoding = self.embedding_layer(decoding)
 
-            enc_rnn_output, state = self.encoding_layer_0(after_embedding_encoding, return_state=True)
-            enc_rnn_output, state = self.encoding_layer_1(enc_rnn_output, return_state=True)
-            enc_rnn_output, state = self.encoding_layer_2(enc_rnn_output, return_state=True)
+            enc_rnn_output, state_0 = self.encoding_layer_0(after_embedding_encoding, return_state=True)
+            enc_rnn_output, state_1 = self.encoding_layer_1(enc_rnn_output, return_state=True)
+            enc_rnn_output, state_2 = self.encoding_layer_2(enc_rnn_output, return_state=True)
 
 
 
             decoding = inputs[1]
             after_embedding_decoding = self.embedding_layer(decoding)
-            dec_rnn_output, state = self.decoding_layer_0(after_embedding_decoding, initial_state=state, return_state=True)
-            dec_rnn_output, state = self.decoding_layer_1(dec_rnn_output, initial_state=state, return_state=True)
-            dec_rnn_output, state = self.decoding_layer_2(dec_rnn_output, initial_state=state, return_state=True)
+            dec_rnn_output, state_0 = self.decoding_layer_0(after_embedding_decoding, initial_state=state_0, return_state=True)
+            dec_rnn_output, state_1 = self.decoding_layer_1(dec_rnn_output, initial_state=state_1, return_state=True)
+            dec_rnn_output, state_2 = self.decoding_layer_2(dec_rnn_output, initial_state=state_2, return_state=True)
 
             dec_output = self.reshape_layer(dec_rnn_output)
             denser_output = self.dense_layer(dec_output)
             output = self.reshape_layer_after(denser_output)
+            states = [state_0, state_1, state_2]
         else:
             encoding = inputs
-            output, state = self.inference(encoding, seq_length, start_token)
+            output, states = self.inference(encoding, seq_length, start_token)
 
         if (return_state):
-            return output, state
+            return output, states
         else:
             return output
