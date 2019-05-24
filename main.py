@@ -81,7 +81,7 @@ if __name__ == "__main__":
         cell_enc=tf.keras.layers.GRUCell,
         cell_dec=tf.keras.layers.GRUCell,
         n_layer=3,
-        n_units=256,
+        n_units=128,
         embedding_layer=tl.layers.Embedding(vocabulary_size=vocabulary_size, embedding_size=emb_dim),
         )
     
