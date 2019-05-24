@@ -10,8 +10,6 @@ from sklearn.utils import shuffle
 from data.twitter import data
 from model_seq2seq import Seq2seq_
 import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID" # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 
 def initial_setup(data_corpus):
