@@ -41,7 +41,7 @@ if __name__ == "__main__":
     batch_size = 16
     n_step = src_len // batch_size
     src_vocab_size = len(metadata['idx2w']) # 8002 (0~8001)
-    emb_dim = 1024
+    emb_dim = 512
 
     word2idx = metadata['w2idx']   # dict  word 2 index
     idx2word = metadata['idx2w']   # list index 2 word
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         cell_enc=tf.keras.layers.GRUCell,
         cell_dec=tf.keras.layers.GRUCell,
         n_layer=3,
-        n_units=128,
+        n_units=256,
         embedding_layer=tl.layers.Embedding(vocabulary_size=vocabulary_size, embedding_size=emb_dim),
         )
     
