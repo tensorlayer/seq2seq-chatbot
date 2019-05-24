@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     assert src_len == tgt_len
 
-    batch_size = 8
+    batch_size = 4
     n_step = src_len // batch_size
     src_vocab_size = len(metadata['idx2w']) # 8002 (0~8001)
     emb_dim = 1024
