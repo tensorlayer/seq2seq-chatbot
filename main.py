@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     assert src_len == tgt_len
 
-    batch_size = 4
+    batch_size = 32
     n_step = src_len // batch_size
     src_vocab_size = len(metadata['idx2w']) # 8002 (0~8001)
     emb_dim = 1024
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         cell_enc=tf.keras.layers.GRUCell,
         cell_dec=tf.keras.layers.GRUCell,
         n_layer=3,
-        n_units=128,
+        n_units=256,
         embedding_layer=tl.layers.Embedding(vocabulary_size=vocabulary_size, embedding_size=emb_dim),
         )
     
