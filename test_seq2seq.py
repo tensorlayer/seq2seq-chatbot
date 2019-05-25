@@ -4,11 +4,11 @@
 import tensorflow as tf
 import tensorlayer as tl
 import numpy as np
-from loss import cross_entropy_seq, cross_entropy_seq_with_mask
+from tensorlayer.cost import cross_entropy_seq, cross_entropy_seq_with_mask
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from data.twitter import data
-from model_seq2seq import Seq2seq_
+from tensorlayer.models.seq2seq import Seq2seq
 import os
 
 
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     batch_size=32
     n_step = src_len//batch_size
 
-    model_ = Seq2seq_(
+    model_ = Seq2seq(
         decoder_seq_length = 4,
         cell_enc=tf.keras.layers.GRUCell,
         cell_dec=tf.keras.layers.GRUCell,

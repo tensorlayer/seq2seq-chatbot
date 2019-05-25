@@ -4,11 +4,11 @@
 import tensorflow as tf
 import tensorlayer as tl
 import numpy as np
-from loss import cross_entropy_seq, cross_entropy_seq_with_mask
+from tensorlayer.cost import cross_entropy_seq, cross_entropy_seq_with_mask
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from data.twitter import data
-from model_seq2seq import Seq2seq_
+from tensorlayer.models.seq2seq import Seq2seq
 import os
 
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     def inference(seed, top_n):
         model_.eval()
         seed_id = [word2idx.get(w, unk_id) for w in seed.split(" ")]
-        sentence_id = model_(inputs=[seed_id], seq_length=30, start_token=start_id, top_n = top_n)
+        sentence_id = model_(inputs=[seed_id], seq_length=20, start_token=start_id, top_n = top_n)
         sentence = []
         for w_id in sentence_id[0]:
             w = idx2word[w_id]
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         return sentence
 
     decoder_seq_length = 20
-    model_ = Seq2seq_(
+    model_ = Seq2seq(
         decoder_seq_length = decoder_seq_length,
         cell_enc=tf.keras.layers.GRUCell,
         cell_dec=tf.keras.layers.GRUCell,
@@ -108,7 +108,6 @@ if __name__ == "__main__":
                 
                 output = tf.reshape(output, [-1, vocabulary_size])
                 ## compute loss and update model
-                #print(output, _target_seqs, _target_mask)
                 loss = cross_entropy_seq_with_mask(logits=output, target_seqs=_target_seqs, input_mask=_target_mask)
 
                 grad = tape.gradient(loss, model_.all_weights)
@@ -116,6 +115,7 @@ if __name__ == "__main__":
             
             total_loss += loss
             n_iter += 1
+
         # printing average loss after every epoch
         print('Epoch [{}/{}]: loss {:.4f}'.format(epoch + 1, num_epochs, total_loss / n_iter))
 
