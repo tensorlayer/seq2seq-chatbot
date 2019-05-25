@@ -8,7 +8,7 @@ This is a 200 lines implementation of Twitter/Cornell-Movie Chatbot, please read
 
 ### Prerequisites
 
-- Python 
+- Python 3.7.1
 - [TensorFlow](https://github.com/tensorflow/tensorflow) >= 2.0
 - [TensorLayer](https://github.com/zsdonghao/tensorlayer) >= 2.0
 
@@ -25,14 +25,9 @@ This is a 200 lines implementation of Twitter/Cornell-Movie Chatbot, please read
 ### Training
 
 ```
-python main.py --batch-size 32 --num-epochs 50 -lr 0.001
+python3 main.py
 ```
 
-### Inference
-
-```
-python main.py --inference-mode
-```
 
 ### Results
 

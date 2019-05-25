@@ -27,6 +27,7 @@ def initial_setup(data_corpus):
 
 if __name__ == "__main__":
     data_corpus = "twitter"
+
     #data preprocessing
     metadata, trainX, trainY, testX, testY, validX, validY = initial_setup(data_corpus)
 
@@ -56,7 +57,7 @@ if __name__ == "__main__":
 
     src_vocab_size = tgt_vocab_size = src_vocab_size + 2
 
-    num_epochs = 100
+    num_epochs = 50
     vocabulary_size = src_vocab_size
     
 
@@ -83,6 +84,12 @@ if __name__ == "__main__":
         embedding_layer=tl.layers.Embedding(vocabulary_size=vocabulary_size, embedding_size=emb_dim),
         )
     
+
+    # Uncomment above statements if you have already saved the model
+
+    # load_weights = tl.files.load_npz(name='model.npz')
+    # tl.files.assign_weights(load_weights, model_)
+
     optimizer = tf.optimizers.Adam(learning_rate=0.001)
     model_.train()
 
@@ -125,6 +132,8 @@ if __name__ == "__main__":
             for i in range(top_n):
                 sentence = inference(seed, top_n)
                 print(" >", ' '.join(sentence))
+
+        tl.files.save_npz(model_.all_weights, name='model.npz')
 
 
         
