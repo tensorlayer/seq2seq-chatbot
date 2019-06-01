@@ -85,7 +85,7 @@ if __name__ == "__main__":
         )
     
 
-    # Uncomment above statements if you have already saved the model
+    # Uncomment below statements if you have already saved the model
 
     # load_weights = tl.files.load_npz(name='model.npz')
     # tl.files.assign_weights(load_weights, model_)
