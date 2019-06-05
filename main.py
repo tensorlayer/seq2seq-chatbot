@@ -9,6 +9,7 @@ from tqdm import tqdm
 from sklearn.utils import shuffle
 from data.twitter import data
 from tensorlayer.models.seq2seq import Seq2seq
+from tensorlayer.models.seq2seq_with_attention import Seq2seq_Attention
 import os
 
 
@@ -65,7 +66,7 @@ if __name__ == "__main__":
     def inference(seed, top_n):
         model_.eval()
         seed_id = [word2idx.get(w, unk_id) for w in seed.split(" ")]
-        sentence_id = model_(inputs=[seed_id], seq_length=20, start_token=start_id, top_n = top_n)
+        sentence_id = model_(inputs=[[seed_id]], seq_length=20, start_token=start_id, top_n = top_n)
         sentence = []
         for w_id in sentence_id[0]:
             w = idx2word[w_id]
