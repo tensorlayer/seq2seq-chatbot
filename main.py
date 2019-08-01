@@ -8,8 +8,8 @@ from tensorlayer.cost import cross_entropy_seq, cross_entropy_seq_with_mask
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from data.twitter import data
-from tensorlayer.models.seq2seq import Seq2seq
-from tensorlayer.models.seq2seq_with_attention import Seq2seqLuongAttention
+from seq2seq_dynamic import Seq2seq
+# from tensorlayer.models.seq2seq_with_attention import Seq2seqLuongAttention
 import os
 
 
@@ -109,10 +109,22 @@ if __name__ == "__main__":
             _decode_seqs = tl.prepro.sequences_add_start_id(Y, start_id=start_id, remove_last=False)
             _decode_seqs = tl.prepro.pad_sequences(_decode_seqs, maxlen=decoder_seq_length)
             _target_mask = tl.prepro.sequences_get_mask(_target_seqs)
+            dec_len = tl.layers.retrieve_seq_length_op3(tf.convert_to_tensor(_decode_seqs))
+            enc_len = tl.layers.retrieve_seq_length_op3(tf.convert_to_tensor(X))
 
+            dec_len = dec_len.numpy()
+            enc_len = enc_len.numpy()
+            for i in range(len(enc_len)):
+                if (enc_len[i] == 0):
+                    enc_len[i] = 1
+                if (dec_len[i] == 0):
+                    dec_len[i] = 1
+            
+            # print(X)
+            # print(enc_len)
             with tf.GradientTape() as tape:
                 ## compute outputs
-                output = model_(inputs = [X, _decode_seqs])
+                output = model_(inputs = [X, _decode_seqs], dec_len = dec_len, enc_len = enc_len)
                 
                 output = tf.reshape(output, [-1, vocabulary_size])
                 ## compute loss and update model
