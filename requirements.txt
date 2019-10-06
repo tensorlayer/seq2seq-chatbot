@@ -4,3 +4,4 @@ tensorlayer
 numpy
 click
 tqdm
+nltk
