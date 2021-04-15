@@ -16,3 +16,4 @@ model.npz
 env/
 venv/
 .idea/
+test.py
