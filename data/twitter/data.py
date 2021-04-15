@@ -1,7 +1,7 @@
 EN_WHITELIST = '0123456789abcdefghijklmnopqrstuvwxyz ' # space is included in whitelist
 EN_BLACKLIST = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\''
 
-FILENAME = 'data/chat.txt'
+FILENAME = 'data\chat.txt' 
 
 limit = {
         'maxq' : 20,
@@ -31,8 +31,8 @@ def ddefault():
 '''
  read lines from file
      return [list of lines]
-
 '''
+
 def read_lines(filename):
     return open(filename).read().split('\n')[:-1]
 
