@@ -7,7 +7,7 @@ import numpy as np
 from tensorlayer.cost import cross_entropy_seq, cross_entropy_seq_with_mask
 from tqdm import tqdm
 from sklearn.utils import shuffle
-from data.twitter import data
+from data.reddit_data import data
 from tensorlayer.models.seq2seq import Seq2seq
 from tensorlayer.models.seq2seq_with_attention import Seq2seqLuongAttention
 import os
@@ -24,7 +24,7 @@ def initial_setup(data_corpus):
     validY = tl.prepro.remove_pad_sequences(validY.tolist())
     return metadata, trainX, trainY, testX, testY, validX, validY
 
-data_corpus = "twitter"
+data_corpus = "reddit_data"
 
 #data preprocessing
 metadata, trainX, trainY, testX, testY, validX, validY = initial_setup(data_corpus)
