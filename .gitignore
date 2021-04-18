@@ -16,3 +16,4 @@ env/
 venv/
 .idea/
 test.py
+chat.txt
